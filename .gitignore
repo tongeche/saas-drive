@@ -1,16 +1,10 @@
-node_modules/
-dist/
+# secrets
 .env
-.env.sample
-
-# Local Netlify folder
-.netlify
-# Secrets & local-only config
-config/*
-!config/placeholders.json
-google-sa.json 
-# Environment & build artifacts
-.env
-node_modules/
-dist/
 config/google-sa.json
+
+# deps/build
+node_modules/
+dist/
+
+# netlify local state
+.netlify/
