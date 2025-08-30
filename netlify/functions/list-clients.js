@@ -6,12 +6,12 @@ export async function handler(event) {
     if (!slug) return bad("missing tenant");
     const supa = supaAdmin();
 
-    const t = await supa.from("tenants")
-      .select("id, slug").eq("slug", slug).limit(1).single();
+    const t = await supa.from("tenants").select("id, slug").eq("slug", slug).limit(1).single();
     if (t.error || !t.data) return bad("tenant not found");
 
-    const q = await supa.from("clients")
-      .select("id, name, email, phone")
+    const q = await supa
+      .from("clients")
+      .select("id, name, email, phone, billing_address, notes")
       .eq("tenant_id", t.data.id)
       .order("created_at", { ascending: true });
     if (q.error) return bad(q.error.message);

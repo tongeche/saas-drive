@@ -1,20 +1,18 @@
 import React, { useEffect, useState } from "react";
 
-const tenants = [
-  { slug: "acme-co", name: "Acme Co Ltd" },
-  { slug: "blue-cafe", name: "Blue Café" }
-];
-
 export default function App() {
-  const [tenant, setTenant] = useState(tenants[0].slug);
-  const [result, setResult] = useState("—");
-  const [lastInvoice, setLastInvoice] = useState({ id: "", number: "" });
-  const [lastPdfUrl, setLastPdfUrl] = useState("");
+  const [tenants, setTenants] = useState([]);
+  const [tenant, setTenant]   = useState(""); // slug
+  const [result, setResult]   = useState("—");
 
   const [clients, setClients] = useState([]);
   const [clientsLoading, setClientsLoading] = useState(false);
   const [clientUuid, setClientUuid] = useState("");
 
+  const [lastInvoice, setLastInvoice] = useState({ id: "", number: "" });
+  const [lastPdfUrl, setLastPdfUrl]   = useState("");
+
+  // invoice form
   const [form, setForm] = useState({
     issue_date: "2025-09-01",
     due_date:   "2025-09-15",
@@ -26,7 +24,39 @@ export default function App() {
   });
   const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
+  // create-client form
+  const [newClient, setNewClient] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    billing_address: "",
+    notes: "",
+    external_id: ""
+  });
+  const updateClient = (k) => (e) => setNewClient((c) => ({ ...c, [k]: e.target.value }));
+
+  // load tenants from DB
   useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/.netlify/functions/list-tenants");
+        const data = await res.json().catch(() => []);
+        if (Array.isArray(data) && data.length) {
+          setTenants(data);
+          setTenant((t) => t || data[0].slug);
+        } else {
+          setTenants([]);
+          setTenant("");
+        }
+      } catch (e) {
+        setResult("Failed to load tenants");
+      }
+    })();
+  }, []);
+
+  // load clients when tenant changes
+  useEffect(() => {
+    if (!tenant) return;
     (async () => {
       try {
         setClientsLoading(true);
@@ -52,8 +82,35 @@ export default function App() {
     setResult(`Loaded ${Array.isArray(data) ? data.length : 0} clients`);
   }
 
+  async function createClient() {
+    if (!tenant) { setResult("Choose a tenant first."); return; }
+    if (!newClient.name.trim()) { setResult("Client name is required."); return; }
+
+    try {
+      const res = await fetch("/.netlify/functions/create-client", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenant, client: newClient }),
+      });
+      const data = await res.json().catch(async () => ({ raw: await res.text() }));
+      if (!res.ok) { setResult(JSON.stringify(data, null, 2)); return; }
+
+      // append to list and select it
+      setClients((cs) => [...cs, data]);
+      setClientUuid(data.id);
+      setResult(JSON.stringify({ created: data }, null, 2));
+
+      // clear form (keep external_id if you like)
+      setNewClient({ name: "", email: "", phone: "", billing_address: "", notes: "", external_id: "" });
+    } catch (err) {
+      setResult(`Error: ${err?.message || String(err)}`);
+    }
+  }
+
   async function createInvoice() {
+    if (!tenant) { setResult("Choose a tenant first."); return; }
     if (!clientUuid) { setResult("Pick a client first."); return; }
+
     const payload = {
       tenant,
       client_uuid: clientUuid,
@@ -103,7 +160,7 @@ export default function App() {
     const data = await res.json().catch(async () => ({ raw: await res.text() }));
     if (!res.ok) throw new Error(data?.error || "PDF failed");
     if (data?.signedUrl) setLastPdfUrl(data.signedUrl);
-    return data; // { id, number, pdfPath, signedUrl }
+    return data;
   }
 
   async function sendPdf() {
@@ -115,41 +172,30 @@ export default function App() {
     }
   }
 
-  function sanitizePhone(p) {
-    // WhatsApp expects E.164 digits without "+" in wa.me/<phone>
-    // Example: 254700000000
-    return String(p || "").replace(/[^\d]/g, "");
-  }
+  function sanitizePhone(p){ return String(p||"").replace(/[^\d]/g,""); }
 
   async function shareWhatsApp() {
     try {
-      // ensure we have a PDF and signed URL
       const data = await ensureSignedPdf();
 
-      // guess phone from selected client
       const selected = clients.find(c => c.id === clientUuid);
       let phone = sanitizePhone(selected?.phone);
       if (!phone) {
-        // Let the tenant paste a phone number if it's missing in the DB
-        const input = window.prompt("WhatsApp phone (international format, e.g. 254700000000):", "");
+        const input = window.prompt("WhatsApp phone (international, e.g. 254700000000):", "");
         phone = sanitizePhone(input || "");
       }
 
-      const total = form.total;
+      const tenantName = tenants.find(x => x.slug === tenant)?.business_name || tenant;
       const msg =
-        `Invoice ${data.number} from ${tenants.find(t => t.slug === tenant)?.name || tenant}\n` +
-        `Total: ${total} ${form.currency}\n` +
+        `Invoice ${data.number} from ${tenantName}\n` +
+        `Total: ${form.total} ${form.currency}\n` +
         `Due: ${form.due_date}\n` +
         `PDF: ${data.signedUrl}`;
 
-      // Build wa.me deep link:
-      // with phone: https://wa.me/<number>?text=...
-      // without phone: https://wa.me/?text=...
       const base = phone ? `https://wa.me/${phone}` : `https://wa.me/`;
       const url = `${base}?text=${encodeURIComponent(msg)}`;
-
-      // open WhatsApp Web / App in a new tab
       window.open(url, "_blank", "noopener,noreferrer");
+
       setResult(JSON.stringify({ action: "whatsapp", to: phone || "(choose in WhatsApp)", number: data.number, link: url }, null, 2));
     } catch (err) {
       setResult(`Error: ${err?.message || String(err)}`);
@@ -166,7 +212,7 @@ export default function App() {
         if (!number) { setResult("No invoice number provided."); return; }
         body.invoice_number = number.trim();
       }
-      const to = window.prompt("Send to email address (leave blank to use client's email):", "");
+      const to = window.prompt("Send to email (blank = use client's email):", "");
       if (to) body.to_email = to.trim();
 
       const res = await fetch("/.netlify/functions/email-invoice", {
@@ -181,14 +227,14 @@ export default function App() {
   }
 
   return (
-    <div style={{maxWidth: 820, margin: "40px auto", fontFamily: "system-ui, sans-serif"}}>
+    <div style={{maxWidth: 900, margin: "40px auto", fontFamily: "system-ui, sans-serif"}}>
       <h1>Back Office</h1>
 
-      {/* Tenant selector */}
+      {/* Tenant selector (from DB) */}
       <label>
         Tenant:&nbsp;
         <select value={tenant} onChange={e => setTenant(e.target.value)}>
-          {tenants.map(t => <option key={t.slug} value={t.slug}>{t.name}</option>)}
+          {tenants.map(t => <option key={t.id} value={t.slug}>{t.business_name || t.slug}</option>)}
         </select>
       </label>
 
@@ -199,7 +245,7 @@ export default function App() {
           <select
             value={clientUuid}
             onChange={(e) => setClientUuid(e.target.value)}
-            disabled={clientsLoading || clients.length === 0}
+            disabled={!tenant || clientsLoading || clients.length === 0}
           >
             <option value="">{clientsLoading ? "Loading…" : clients.length ? "— select —" : "No clients found"}</option>
             {clients.map(c =>
@@ -218,6 +264,20 @@ export default function App() {
         </div>
       )}
 
+      {/* Create Client form */}
+      <fieldset style={{ marginTop: 16, padding: 12, border: "1px solid #eaecef", borderRadius: 6 }}>
+        <legend>Add Client</legend>
+        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8}}>
+          <input placeholder="Name *" value={newClient.name} onChange={updateClient("name")} />
+          <input placeholder="Email"   value={newClient.email} onChange={updateClient("email")} />
+          <input placeholder="Phone (e.g. 254700000000)" value={newClient.phone} onChange={updateClient("phone")} />
+          <input placeholder="External ID (optional)" value={newClient.external_id} onChange={updateClient("external_id")} />
+          <input placeholder="Billing address" value={newClient.billing_address} onChange={updateClient("billing_address")} />
+          <input placeholder="Notes" value={newClient.notes} onChange={updateClient("notes")} />
+        </div>
+        <button style={{ marginTop: 10 }} onClick={createClient}>Create Client</button>
+      </fieldset>
+
       {/* Invoice fields */}
       <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:16}}>
         <input placeholder="issue_date YYYY-MM-DD" value={form.issue_date} onChange={update("issue_date")} />
@@ -232,10 +292,10 @@ export default function App() {
       {/* Actions */}
       <div style={{display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap"}}>
         <button onClick={ping}>Ping</button>
-        <button onClick={createInvoice}>Create Invoice (Supabase)</button>
-        <button onClick={sendPdf}>Generate PDF / Link</button>
-        <button onClick={shareWhatsApp}>Share via WhatsApp</button>
-        <button onClick={emailInvoice}>Email Invoice</button>
+        <button onClick={createInvoice} disabled={!clientUuid}>Create Invoice (Supabase)</button>
+        <button onClick={sendPdf} disabled={!lastInvoice.id && !lastInvoice.number}>Generate PDF / Link</button>
+        <button onClick={shareWhatsApp} disabled={!lastInvoice.id && !lastInvoice.number}>Share via WhatsApp</button>
+        <button onClick={emailInvoice} disabled={!lastInvoice.id && !lastInvoice.number}>Email Invoice</button>
       </div>
 
       {/* Quick link to latest generated PDF */}
