@@ -1,6 +1,6 @@
 # SaaS (Drive-backed) — Minimal Scaffold
 
-NNetlify + Vite (React) SPA, Netlify Functions as API. Google Drive/Sheets/Docs to be wired next.
+Netlify + Vite (React) SPA, Netlify Functions as API. Google Drive/Sheets/Docs to be wired next.
 
 ## Dev
 npm install
