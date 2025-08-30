@@ -1,4 +1,5 @@
 {
+	"siteId": "f2d4c39c-ee58-4146-b985-bd0d2abcd5c2",
 	"geolocation": {
 		"data": {
 			"city": "Porto",
@@ -15,6 +16,6 @@
 			"longitude": -8.6022,
 			"postalCode": "4465-120"
 		},
-		"timestamp": 1756481695936
+		"timestamp": 1756491725853
 	}
 }

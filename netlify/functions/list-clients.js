@@ -1,19 +1,26 @@
-import { getGoogleClients } from "./_google.js";
-import { getTenantBySlug } from "./_tenant.js";
+import { supaAdmin } from "./_supa.js";
 
 export async function handler(event) {
   try {
-    const tenantSlug = (event.queryStringParameters?.tenant || "").trim();
-    const tenant = await getTenantBySlug(tenantSlug);
-    const { sheets } = getGoogleClients();
-    const res = await sheets.spreadsheets.values.get({
-      spreadsheetId: tenant.clients_sheet_id,
-      range: "Clients!A:Z",
-    });
-    const [header = [], ...rows] = res.data.values || [];
-    const items = rows.map(r => Object.fromEntries(header.map((h,i)=>[h, r[i] ?? ""])));
-    return { statusCode: 200, body: JSON.stringify(items) };
-  } catch (err) {
-    return { statusCode: 400, body: JSON.stringify({ error: err.message || "error" }) };
+    const slug = (event.queryStringParameters?.tenant || "").trim();
+    if (!slug) return bad("missing tenant");
+    const supa = supaAdmin();
+
+    const t = await supa.from("tenants")
+      .select("id, slug").eq("slug", slug).limit(1).single();
+    if (t.error || !t.data) return bad("tenant not found");
+
+    const q = await supa.from("clients")
+      .select("id, name, email, phone")
+      .eq("tenant_id", t.data.id)
+      .order("created_at", { ascending: true });
+    if (q.error) return bad(q.error.message);
+
+    return ok(q.data || []);
+  } catch (e) {
+    return bad(e.message || "error");
   }
 }
+
+function ok(body){return{statusCode:200,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}}
+function bad(msg){return{statusCode:400,headers:{'Content-Type':'application/json'},body:JSON.stringify({error:msg})}}
