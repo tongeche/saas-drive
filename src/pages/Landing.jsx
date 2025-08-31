@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import supabase from "../lib/supabase";
 import SiteHeader from "../components/SiteHeader.jsx";
-import FaqSection from "../components/FaqSection.jsx";
+import Testimonials from '../components/testimonials.jsx';
+import FaqSection from "../components/FaqSection.jsx"
 
 /**
  * Smoothly scroll to the current hash, with optional offset for sticky headers.
@@ -519,6 +520,73 @@ export default function Landing() {
                     <div className="text-lg font-semibold text-gray-900">
                       3.2
                     </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="testimonials" className="bg-white py-20 px-4 sm:px-6 lg:px-8">
+        <Testimonials />
+        </section>
+
+
+        <section
+          id="we-do-it-differently"
+          className="bg-white py-20 px-4 sm:px-6 lg:px-8"
+        >
+          <div className="max-w-7xl mx-auto text-center">
+            <div class="bg-white py-16 sm:py-24">
+              <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-12">
+                  We do this differently
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                  <div class="p-6 rounded-lg bg-gray-50 flex flex-col items-center justify-center h-full">
+                    <p class="text-5xl font-extrabold text-finovo mb-2">10+</p>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                      Startups Served
+                    </h3>
+                    <p class="text-gray-600 text-sm max-w-xs">
+                      Empowering founders across borders with intuitive
+                      financial tools.
+                    </p>
+                  </div>
+                  <div class="p-6 rounded-lg bg-gray-50 flex flex-col items-center justify-center h-full">
+                    <p class="text-5xl font-extrabold text-finovo mb-2">
+                      $10K<span class="text-3xl">+</span>
+                    </p>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                      Total Invoiced
+                    </h3>
+                    <p class="text-gray-600 text-sm max-w-xs">
+                      Helping startups secure crucial funding to fuel their big
+                      ideas.
+                    </p>
+                  </div>
+                  <div class="p-6 rounded-lg bg-gray-50 flex flex-col items-center justify-center h-full">
+                    <p class="text-5xl font-extrabold text-finovo mb-2">
+                      30<span class="text-3xl">%</span>
+                    </p>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                      Time Saved
+                    </h3>
+                    <p class="text-gray-600 text-sm max-w-xs">
+                      Automating busy work, giving founders more time to
+                      innovate and grow.
+                    </p>
+                  </div>
+                  <div class="p-6 rounded-lg bg-gray-50 flex flex-col items-center justify-center h-full">
+                    <p class="text-5xl font-extrabold text-finovo mb-2">
+                      15<span class="text-3xl">+</span>
+                    </p>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                      Client Reviews
+                    </h3>
+                    <p class="text-gray-600 text-sm max-w-xs">
+                      A dedicated team building the future o stratup finance.
+                    </p>
                   </div>
                 </div>
               </div>

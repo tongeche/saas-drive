@@ -186,7 +186,7 @@ export default function SiteHeader() {
         {/* Logo */}
         <div className="flex items-center space-x-2">
           <Link to="/#home" className="flex items-center">
-            <span className="inline-block h-3 w-3 rounded-sm bg-finovo mr-2" />
+          
             <span className="text-2xl font-extrabold tracking-tight text-gray-900">
               Finovo
             </span>

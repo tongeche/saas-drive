@@ -114,7 +114,7 @@ export default function Login() {
     <div className="flex items-center gap-3">
       {/* Profile image */}
       <img
-        src="/assets/imgs/login-review.png"   h
+        src="/assets/imgs/login-reviewer1.png"   h
         alt="Customer reviewer"
         className="h-10 w-10 rounded-full object-cover border border-gray-300 shadow-sm"
       />

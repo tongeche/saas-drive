@@ -97,9 +97,7 @@ export default function FaqSection() {
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <p className="text-finovo font-semibold uppercase tracking-wide">
-            FAQ
-          </p>
+         
           <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-gray-900">
             We know you have questions.
           </h2>
