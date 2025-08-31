@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useOutletContext, Link } from "react-router-dom";
 import supabase from "../lib/supabase";
 import { listClients, createClient } from "../lib/clients";
@@ -20,7 +20,6 @@ export default function Dashboard() {
     setLoading(true);
     setMsg("");
     try {
-      // Server-side filter + include tenant_id for sanity check
       const { data: invs, error } = await supabase
         .from("invoices")
         .select("id, number, client_id, due_date, issue_date, total, currency, created_at, tenant_id")
@@ -29,10 +28,9 @@ export default function Dashboard() {
         .limit(50);
       if (error) throw error;
 
-      // Client-side safety belt
       let out = (invs || []).filter(r => r.tenant_id === tenantId);
 
-      // Resolve client names
+      // map client names
       const ids = Array.from(new Set(out.map(i => i.client_id).filter(Boolean)));
       if (ids.length) {
         const { data: clients, error: cErr } = await supabase
@@ -60,30 +58,33 @@ export default function Dashboard() {
       setMsg("No tenants found on this account.");
       return;
     }
-    setSeeding(true); setMsg("");
+    setSeeding(true);
+    setMsg("");
 
     try {
       const target = tenants.find(t => t?.slug === "router-limited");
-      if (!target) { setMsg('No tenant with slug "router-limited" in your workspaces.'); return; }
-
+      if (!target) {
+        setMsg('No tenant with slug "router-limited" in your workspaces.');
+        return;
+      }
       if (!tenant || tenant.id !== target.id) setTenant?.(target);
 
-      // Ensure at least 3 clients exist
+      // ensure 3 clients minimum
       let clients = await listClients(target.id);
       const seedClients = [
         { name: "Acme Inc.", email: "billing@acme.test", phone: "912 345 678" },
         { name: "Globex Corp", email: "ap@globex.test", phone: "910 111 222" },
-        { name: "Tech Solutions", email: "ap@techsolutions.test", phone: "913 222 333" },
+        { name: "Tech Solutions", email: "ap@techsolutions.test", phone: "913 222 333" }
       ];
       for (let i = clients.length; i < 3; i++) {
         const c = await createClient(target.id, seedClients[i]);
         clients.push(c);
       }
 
-      // Create 8 demo invoices
-      const todayISO = new Date().toISOString().slice(0,10);
+      // create 8 invoices
+      const todayISO = new Date().toISOString().slice(0, 10);
       const cur = (target.currency || "EUR").toUpperCase();
-      const toISO = d => new Date(d).toISOString().slice(0,10);
+      const toISO = d => new Date(d).toISOString().slice(0, 10);
 
       for (let i = 0; i < 8; i++) {
         const c = clients[i % clients.length];
@@ -100,7 +101,7 @@ export default function Dashboard() {
           subtotal,
           tax_total: tax,
           total,
-          notes: "Seeded demo invoice",
+          notes: "Seeded demo invoice"
         });
       }
 
@@ -136,23 +137,22 @@ export default function Dashboard() {
         {/* Quotes (placeholder) */}
         <section className="lg:col-span-1 rounded-2xl bg-white shadow-sm ring-1 ring-black/5 overflow-hidden">
           <Header title="Recent Quotes">
-            <button className="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5">New Quote</button>
+            <button className="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5">
+              New Quote
+            </button>
           </Header>
           <ul className="divide-y divide-black/5 text-sm">
             {[
-              { id:"Q-2045", who:"Tech Solutions", what:"Website revamp", amt:"—", status:"Accepted", cls:"text-emerald-700 bg-emerald-50" },
-              { id:"Q-2046", who:"Acme Inc.",       what:"Annual support", amt:"—", status:"Pending",  cls:"text-amber-700 bg-amber-50" },
-              { id:"Q-2047", who:"Globex Corp.",    what:"On-site training", amt:"—", status:"Declined", cls:"text-rose-700 bg-rose-50" },
+              { id: "Q-2045", who: "Tech Solutions", what: "Website revamp", status: "Accepted", cls: "text-emerald-700 bg-emerald-50" },
+              { id: "Q-2046", who: "Acme Inc.", what: "Annual support", status: "Pending", cls: "text-amber-700 bg-amber-50" },
+              { id: "Q-2047", who: "Globex Corp.", what: "On-site training", status: "Declined", cls: "text-rose-700 bg-rose-50" }
             ].map(q => (
               <li key={q.id} className="flex items-center justify-between px-4 py-3">
                 <div>
                   <div className="font-medium">{q.id} · {q.who}</div>
                   <div className="text-black/60">{q.what}</div>
                 </div>
-                <div className="text-right">
-                  <div className="font-semibold">{q.amt}</div>
-                  <span className={`inline-flex items-center ${q.cls} px-2 py-0.5 rounded-full text-xs`}>{q.status}</span>
-                </div>
+                <span className={`inline-flex items-center ${q.cls} px-2 py-0.5 rounded-full text-xs`}>{q.status}</span>
               </li>
             ))}
           </ul>
@@ -174,7 +174,9 @@ export default function Dashboard() {
               >
                 {seeding ? "Seeding…" : "Seed demo"}
               </button>
-              <Link to="/app/invoices/new" className="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5">New Invoice</Link>
+              <Link to="/app/invoices/new" className="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5">
+                New Invoice
+              </Link>
             </div>
           </Header>
 
@@ -223,14 +225,14 @@ export default function Dashboard() {
 
       {/* Quick actions */}
       <div className="pb-8">
-        <div className="rounded-2xl shadow-sm ring-1 ring-black/5 p-4 flex flex-wrap gap-3" style={{ background:"#E9F5EE" }}>
+        <div className="rounded-2xl shadow-sm ring-1 ring-black/5 p-4 flex flex-wrap gap-3" style={{ background: "#E9F5EE" }}>
           <button className="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
             Create Quote
           </button>
           <Link to="/app/invoices/new" className="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
             Create Invoice
           </Link>
-          <Link to="/app/lab" className="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
+          <Link to="/app/clients/new" className="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
             Add Client
           </Link>
           <button className="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
@@ -267,12 +269,12 @@ function formatDate(d) {
   if (!d) return "—";
   try { return new Date(d).toLocaleDateString(); } catch { return String(d); }
 }
-function sum(arr) { return arr.reduce((a,b)=>a + (Number(b)||0), 0); }
-function formatMoney(amount, currency="EUR") {
+function sum(arr) { return arr.reduce((a, b) => a + (Number(b) || 0), 0); }
+function formatMoney(amount, currency = "EUR") {
   try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(Number(amount||0));
+    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(Number(amount || 0));
   } catch {
-    return `${currency} ${Number(amount||0).toFixed(2)}`;
+    return `${currency} ${Number(amount || 0).toFixed(2)}`;
   }
 }
 function inThisMonth(iso) {
@@ -283,7 +285,7 @@ function inThisMonth(iso) {
 function statusOf(inv) {
   const due = inv?.due_date ? new Date(inv.due_date) : null;
   if (!due) return "Issued";
-  const today = new Date(); today.setHours(0,0,0,0);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
   const diff = (due - today) / 86400000;
   if (diff < 0) return "Overdue";
   if (diff <= 7) return "Due Soon";

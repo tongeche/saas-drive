@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import supabase from "../lib/supabase";
 import { loadMyTenants, getActiveTenant, saveActiveTenant } from "../lib/tenantState";
@@ -9,8 +9,13 @@ export default function AppShell() {
 
   const [session, setSession] = useState(null);
   const [tenants, setTenants] = useState([]);
+  const [tenantsLoaded, setTenantsLoaded] = useState(false);
   const [tenant, setTenantState] = useState(getActiveTenant());
-  const setTenant = (t) => { setTenantState(t); try { saveActiveTenant(t); } catch {} };
+
+  const setTenant = (t) => {
+    setTenantState(t);
+    try { saveActiveTenant(t); } catch {}
+  };
 
   // hydrate auth + subscribe
   useEffect(() => {
@@ -23,27 +28,34 @@ export default function AppShell() {
     return () => sub?.subscription?.unsubscribe?.();
   }, []);
 
-  // load my tenants (membership)
+  // load my tenants
   useEffect(() => {
     (async () => {
       try {
         const rows = await loadMyTenants();
         setTenants(rows || []);
-        // choose active if none
+        setTenantsLoaded(true);
         if (!tenant && rows && rows.length) setTenant(rows[0]);
       } catch {
-        // ignore
+        setTenantsLoaded(true);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // guards: not logged in → login; no tenant on /app → onboard
+  useEffect(() => {
+    if (session === null) return; // not hydrated yet
+    if (!session) { nav("/login", { replace: true }); return; }
+    if (loc.pathname.startsWith("/app") && tenantsLoaded && tenants.length === 0) {
+      nav("/onboard", { replace: true });
+    }
+  }, [session, tenantsLoaded, tenants.length, loc.pathname, nav]);
+
   async function logout() {
     try { await supabase.auth.signOut(); } catch {}
     nav("/login", { replace: true });
   }
-
-  const isActive = (p) => (loc.pathname === p ? "bg-white text-gray-900 shadow-sm" : "text-gray-700 hover:bg-white/70");
 
   return (
     <div className="min-h-screen bg-[#ECF5F0] flex">
@@ -52,15 +64,25 @@ export default function AppShell() {
         <div className="px-4 py-4 text-lg font-extrabold">Finovo</div>
 
         <nav className="px-2 space-y-2">
-          <NavLink to="/app" className={({isActive}) =>
-            `flex items-center gap-2 px-3 py-2 rounded-xl ${isActive ? "bg-white text-gray-900 shadow-sm" : "text-gray-700 hover:bg-white/70"}`
-          }>
+          <NavLink
+            to="/app"
+            className={({ isActive }) =>
+              `flex items-center gap-2 px-3 py-2 rounded-xl ${
+                isActive ? "bg-white text-gray-900 shadow-sm" : "text-gray-700 hover:bg-white/70"
+              }`
+            }
+          >
             <span>🏠</span><span>Dashboard</span>
           </NavLink>
 
-          <NavLink to="/app/lab" className={({isActive}) =>
-            `flex items-center gap-2 px-3 py-2 rounded-xl ${isActive ? "bg-white text-gray-900 shadow-sm" : "text-gray-700 hover:bg-white/70"}`
-          }>
+          <NavLink
+            to="/app/lab"
+            className={({ isActive }) =>
+              `flex items-center gap-2 px-3 py-2 rounded-xl ${
+                isActive ? "bg-white text-gray-900 shadow-sm" : "text-gray-700 hover:bg-white/70"
+              }`
+            }
+          >
             <span>🧪</span><span>Back Office (Lab)</span>
           </NavLink>
 
@@ -69,7 +91,15 @@ export default function AppShell() {
             onClick={() => nav("/app/invoices/new")}
             className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-gray-700 hover:bg-white/70"
           >
-            <span>➕</span><span>New Invoice</span>
+            <span>🧾</span><span>New Invoice</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => nav("/app/clients/new")}
+            className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-gray-700 hover:bg-white/70"
+          >
+            <span>👤</span><span>Add Client</span>
           </button>
 
           <button
@@ -96,8 +126,10 @@ export default function AppShell() {
         <header className="sticky top-0 z-10 bg-[#ECF5F0]/80 backdrop-blur border-b border-black/10">
           <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
             <div className="hidden md:flex items-center gap-2 rounded-xl bg-white/70 px-3 py-2 shadow-sm ring-1 ring-black/5">
-              <svg className="h-4 w-4 text-black/50" viewBox="0 0 24 24" fill="currentColor"><path d="M21 21l-4.3-4.3M10 18a8 8 0 110-16 8 8 0 010 16z"/></svg>
-              <input placeholder="Search..." className="bg-transparent outline-none text-sm w-56"/>
+              <svg className="h-4 w-4 text-black/50" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 21l-4.3-4.3M10 18a8 8 0 110-16 8 8 0 010 16z" />
+              </svg>
+              <input placeholder="Search..." className="bg-transparent outline-none text-sm w-56" />
             </div>
 
             <div className="flex items-center gap-2">
