@@ -11,15 +11,17 @@ import Login from "./pages/Login.jsx";
 
 import AppShell from "./app/AppShell.jsx";
 import Dashboard from "./app/Dashboard.jsx";
+import InvoiceNew from "./app/InvoiceNew.jsx";
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
-        {/* New nested App area */}
+
         <Route path="/app" element={<AppShell />}>
           <Route index element={<Dashboard />} />
+          <Route path="invoices/new" element={<InvoiceNew />} />
           <Route path="lab" element={<App />} />
         </Route>
 

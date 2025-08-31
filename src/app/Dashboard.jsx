@@ -11,7 +11,6 @@ export default function Dashboard() {
   const [seeding, setSeeding] = useState(false);
   const [msg, setMsg] = useState("");
 
-  // Load invoices for current tenant
   useEffect(() => {
     if (!tenant?.id) return;
     loadInvoices(tenant.id).catch(() => {});
@@ -21,18 +20,19 @@ export default function Dashboard() {
     setLoading(true);
     setMsg("");
     try {
-      // 1) fetch invoices only (NO embed to avoid FK ambiguity)
+      // Server-side filter + include tenant_id for sanity check
       const { data: invs, error } = await supabase
         .from("invoices")
-        .select("id, number, client_id, due_date, issue_date, total, currency, created_at")
+        .select("id, number, client_id, due_date, issue_date, total, currency, created_at, tenant_id")
         .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false })
         .limit(50);
       if (error) throw error;
 
-      let out = invs || [];
+      // Client-side safety belt
+      let out = (invs || []).filter(r => r.tenant_id === tenantId);
 
-      // 2) fetch client names for the unique client_ids
+      // Resolve client names
       const ids = Array.from(new Set(out.map(i => i.client_id).filter(Boolean)));
       if (ids.length) {
         const { data: clients, error: cErr } = await supabase
@@ -174,7 +174,7 @@ export default function Dashboard() {
               >
                 {seeding ? "Seeding…" : "Seed demo"}
               </button>
-              <Link to="/app/lab" className="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5">New Invoice</Link>
+              <Link to="/app/invoices/new" className="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5">New Invoice</Link>
             </div>
           </Header>
 
@@ -227,7 +227,7 @@ export default function Dashboard() {
           <button className="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
             Create Quote
           </button>
-          <Link to="/app/lab" className="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
+          <Link to="/app/invoices/new" className="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
             Create Invoice
           </Link>
           <Link to="/app/lab" className="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
