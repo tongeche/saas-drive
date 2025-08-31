@@ -43,7 +43,10 @@ export default function Landing() {
 
       {/* Hero */}
       <main>
-        <section id="home" className="relative py-20 bg-finovo-light/50 overflow-hidden">
+        <section
+          id="home"
+          className="relative py-20 bg-finovo-light/50 overflow-hidden"
+        >
           {/* soft radial wash */}
           <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_top,rgba(60,107,91,0.10),rgba(217,240,225,0.40))]" />
 
@@ -174,31 +177,30 @@ export default function Landing() {
 
               {/* Copy */}
               <div className="lg:w-1/2 text-center lg:text-left">
-                <p className="text-finovo text-sm font-semibold uppercase tracking-wider">
-                  OUR FEATURE
-                </p>
                 <h2 className="mt-2 text-3xl font-extrabold text-gray-900 sm:text-4xl">
                   Smart invoices. Simple payments.
                 </h2>
-                <p className="mt-4 text-lg text-gray-500">
-                  Generate custom invoices in seconds and share them directly
-                  with clients. Finovo is designed to make the entire process
-                  effortless, from creation to collection. It’s invoicing,
-                  simplified.
-                </p>
-                <div className="mt-8 flex gap-3">
+                <div className="mb-4">
+                  <img
+                    src="/assets/imgs/sc-smart-reliable-invoice.png"
+                    alt="Feature illustration"
+                    className="rounded-lg shadow-md w-full h-auto"
+                  />
+                  <p className="mt-4 text-lg text-gray-500 px-4 sm:px-0 py-6 ">
+                    Generate custom invoices in seconds and share them directly
+                    with clients. Finovo is designed to make the entire process
+                    effortless, from creation to collection. It’s invoicing,
+                    simplified.
+                  </p>
+                </div>
+
+                <div className=" px-4 py-2 mt-8 flex gap-3 items-center justify-center">
                   <a
                     href="#contact"
                     className="inline-flex items-center justify-center px-5 py-3 rounded-md text-white bg-finovo hover:opacity-90"
                   >
                     Talk to sales
                   </a>
-                  <Link
-                    to="/register"
-                    className="inline-flex items-center justify-center px-5 py-3 rounded-md border border-gray-300 hover:bg-gray-50"
-                  >
-                    Try free
-                  </Link>
                 </div>
               </div>
             </div>
@@ -310,7 +312,10 @@ export default function Landing() {
         </section>
 
         {/* Boost Productivity */}
-        <section id="productivity" className="bg-white py-20 px-4 sm:px-6 lg:px-8">
+        <section
+          id="productivity"
+          className="bg-white py-20 px-4 sm:px-6 lg:px-8"
+        >
           <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             {/* LEFT: copy */}
             <div className="max-w-xl">
@@ -404,23 +409,79 @@ export default function Landing() {
                     <line x1="40" y1="160" x2="400" y2="160" stroke="#9ca3af" />
                     {/* bars */}
                     <g>
-                      <rect x="60"  y="95"  width="36" height="65" fill="#d9f0e1" />
-                      <rect x="106" y="70"  width="36" height="90" fill="#3c6b5b" />
-                      <rect x="152" y="85"  width="36" height="75" fill="#d9f0e1" />
-                      <rect x="198" y="120" width="36" height="40" fill="#d9f0e1" />
-                      <rect x="244" y="60"  width="36" height="100" fill="#3c6b5b" />
-                      <rect x="290" y="45"  width="36" height="115" fill="#d9f0e1" />
-                      <rect x="336" y="30"  width="36" height="130" fill="#3c6b5b" />
+                      <rect
+                        x="60"
+                        y="95"
+                        width="36"
+                        height="65"
+                        fill="#d9f0e1"
+                      />
+                      <rect
+                        x="106"
+                        y="70"
+                        width="36"
+                        height="90"
+                        fill="#3c6b5b"
+                      />
+                      <rect
+                        x="152"
+                        y="85"
+                        width="36"
+                        height="75"
+                        fill="#d9f0e1"
+                      />
+                      <rect
+                        x="198"
+                        y="120"
+                        width="36"
+                        height="40"
+                        fill="#d9f0e1"
+                      />
+                      <rect
+                        x="244"
+                        y="60"
+                        width="36"
+                        height="100"
+                        fill="#3c6b5b"
+                      />
+                      <rect
+                        x="290"
+                        y="45"
+                        width="36"
+                        height="115"
+                        fill="#d9f0e1"
+                      />
+                      <rect
+                        x="336"
+                        y="30"
+                        width="36"
+                        height="130"
+                        fill="#3c6b5b"
+                      />
                     </g>
                     {/* labels */}
                     <g fill="#6b7280" fontSize="12" textAnchor="middle">
-                      <text x="78"  y="175">Mon</text>
-                      <text x="124" y="175">Tue</text>
-                      <text x="170" y="175">Wed</text>
-                      <text x="216" y="175">Thu</text>
-                      <text x="262" y="175">Fri</text>
-                      <text x="308" y="175">Sat</text>
-                      <text x="354" y="175">Sun</text>
+                      <text x="78" y="175">
+                        Mon
+                      </text>
+                      <text x="124" y="175">
+                        Tue
+                      </text>
+                      <text x="170" y="175">
+                        Wed
+                      </text>
+                      <text x="216" y="175">
+                        Thu
+                      </text>
+                      <text x="262" y="175">
+                        Fri
+                      </text>
+                      <text x="308" y="175">
+                        Sat
+                      </text>
+                      <text x="354" y="175">
+                        Sun
+                      </text>
                     </g>
                   </svg>
 
@@ -442,7 +503,6 @@ export default function Landing() {
                     </span>
                   </div>
                 </div>
-              
 
                 {/* Footer stats */}
                 <div className="grid grid-cols-2 gap-0 border-t">
@@ -465,7 +525,7 @@ export default function Landing() {
             </div>
           </div>
         </section>
-        
+
         <section id="faq" className="bg-white py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <FaqSection />
@@ -624,7 +684,10 @@ export default function Landing() {
               </p>
 
               {/* Newsletter form */}
-              <form className="mt-6 flex max-w-md" onSubmit={(e)=>e.preventDefault()}>
+              <form
+                className="mt-6 flex max-w-md"
+                onSubmit={(e) => e.preventDefault()}
+              >
                 <input
                   type="email"
                   placeholder="Enter your email"
@@ -638,53 +701,159 @@ export default function Landing() {
                   Subscribe
                 </button>
               </form>
-              <p className="mt-2 text-xs text-white/60">Stay updated with our latest features and insights.</p>
+              <p className="mt-2 text-xs text-white/60">
+                Stay updated with our latest features and insights.
+              </p>
             </div>
 
             <div>
               <h3 className="font-bold mb-4">Product</h3>
               <ul className="space-y-2 text-sm text-white/80">
-                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
+                <li>
+                  <a
+                    href="#features"
+                    className="hover:text-white transition-colors"
+                  >
+                    Features
+                  </a>
+                </li>
                 {/* Only show Pricing if you have a /pricing route */}
                 {/* <li><Link to="/pricing" className="hover:text-white transition-colors">Pricing</Link></li> */}
-                <li><a href="#why" className="hover:text-white transition-colors">Why Finovo</a></li>
-                <li><a href="#productivity" className="hover:text-white transition-colors">Productivity</a></li>
+                <li>
+                  <a href="#why" className="hover:text-white transition-colors">
+                    Why Finovo
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#productivity"
+                    className="hover:text-white transition-colors"
+                  >
+                    Productivity
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h3 className="font-bold mb-4">Company</h3>
               <ul className="space-y-2 text-sm text-white/80">
-                <li><a href="#about" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#contact" className="hover:text-white transition-colors">Contact Us</a></li>
-                <li><Link to="/careers" className="hover:text-white transition-colors">Careers</Link></li>
-                <li><Link to="/culture" className="hover:text-white transition-colors">Culture</Link></li>
-                <li><Link to="/blog" className="hover:text-white transition-colors">Blog</Link></li>
+                <li>
+                  <a
+                    href="#about"
+                    className="hover:text-white transition-colors"
+                  >
+                    About
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#contact"
+                    className="hover:text-white transition-colors"
+                  >
+                    Contact Us
+                  </a>
+                </li>
+                <li>
+                  <Link
+                    to="/careers"
+                    className="hover:text-white transition-colors"
+                  >
+                    Careers
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/culture"
+                    className="hover:text-white transition-colors"
+                  >
+                    Culture
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/blog"
+                    className="hover:text-white transition-colors"
+                  >
+                    Blog
+                  </Link>
+                </li>
               </ul>
             </div>
 
             <div>
               <h3 className="font-bold mb-4">Support</h3>
               <ul className="space-y-2 text-sm text-white/80">
-                <li><Link to="/getting-started" className="hover:text-white transition-colors">Getting Started</Link></li>
-                <li><Link to="/help" className="hover:text-white transition-colors">Help Center</Link></li>
-                <li><Link to="/status" className="hover:text-white transition-colors">Server Status</Link></li>
-                <li><Link to="/bug" className="hover:text-white transition-colors">Report a Bug</Link></li>
-                <li><Link to="/chat" className="hover:text-white transition-colors">Chat Support</Link></li>
+                <li>
+                  <Link
+                    to="/getting-started"
+                    className="hover:text-white transition-colors"
+                  >
+                    Getting Started
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/help"
+                    className="hover:text-white transition-colors"
+                  >
+                    Help Center
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/status"
+                    className="hover:text-white transition-colors"
+                  >
+                    Server Status
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/bug"
+                    className="hover:text-white transition-colors"
+                  >
+                    Report a Bug
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/chat"
+                    className="hover:text-white transition-colors"
+                  >
+                    Chat Support
+                  </Link>
+                </li>
               </ul>
 
               <h3 className="font-bold mt-8 mb-4">Social</h3>
               <div className="flex space-x-3 text-2xl">
-                <a href="https://facebook.com" className="text-white/60 hover:text-white transition-colors" aria-label="Facebook">
+                <a
+                  href="https://facebook.com"
+                  className="text-white/60 hover:text-white transition-colors"
+                  aria-label="Facebook"
+                >
                   <i className="fab fa-facebook-f" />
                 </a>
-                <a href="https://twitter.com" className="text-white/60 hover:text-white transition-colors" aria-label="Twitter">
+                <a
+                  href="https://twitter.com"
+                  className="text-white/60 hover:text-white transition-colors"
+                  aria-label="Twitter"
+                >
                   <i className="fab fa-twitter" />
                 </a>
-                <a href="https://instagram.com" className="text-white/60 hover:text-white transition-colors" aria-label="Instagram">
+                <a
+                  href="https://instagram.com"
+                  className="text-white/60 hover:text-white transition-colors"
+                  aria-label="Instagram"
+                >
                   <i className="fab fa-instagram" />
                 </a>
-                <a href="https://linkedin.com" className="text-white/60 hover:text-white transition-colors" aria-label="LinkedIn">
+                <a
+                  href="https://linkedin.com"
+                  className="text-white/60 hover:text-white transition-colors"
+                  aria-label="LinkedIn"
+                >
                   <i className="fab fa-linkedin-in" />
                 </a>
               </div>
