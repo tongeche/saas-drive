@@ -1,7 +1,7 @@
 // src/components/SiteHeader.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import ReactDOM from "react-dom";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import supabase from "../lib/supabase";
 
 const SECTION_LINKS = [
@@ -13,17 +13,17 @@ const SECTION_LINKS = [
   { label: "Contact", id: "contact", to: "/#contact", type: "hash" },
 ];
 
-function MobileDrawer({ open, onClose, loggedIn }) {
+function MobileDrawer({ open, onClose, loggedIn, onLogout }) {
   if (!open) return null;
 
   // Render at <body> level to escape header stacking context
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-[10000] md:hidden">
-      {/* Solid brand overlay: prevents ANY visual clash */}
+      {/* Soft overlay to block background */}
       <button
         aria-label="Close menu"
         onClick={onClose}
-        className="absolute inset-0 z-[10000] bg-[#F7FAFC] transition-opacity opacity-100"
+        className="absolute inset-0 z-[10000] bg-black/40 transition-opacity opacity-100"
       />
       {/* Drawer panel */}
       <div
@@ -84,29 +84,47 @@ function MobileDrawer({ open, onClose, loggedIn }) {
           <div className="my-5 h-px bg-gray-200" />
 
           {/* Auth + CTA */}
-          <div className="space-y-2">
-            <Link
-              to="/login"
-              onClick={onClose}
-              className="block w-full text-center px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-50"
-            >
-              Log In
-            </Link>
-            <Link
-              to="/register"
-              onClick={onClose}
-              className="block w-full text-center px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-50"
-            >
-              Sign Up
-            </Link>
-            <Link
-              to="/#contact"
-              onClick={onClose}
-              className="block w-full text-center px-4 py-2 rounded-md text-white bg-finovo hover:opacity-95"
-            >
-              Book a demo
-            </Link>
-          </div>
+          {!loggedIn ? (
+            <div className="space-y-2">
+              <Link
+                to="/login"
+                onClick={onClose}
+                className="block w-full text-center px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-50"
+              >
+                Log In
+              </Link>
+              <Link
+                to="/register"
+                onClick={onClose}
+                className="block w-full text-center px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-50"
+              >
+                Sign Up
+              </Link>
+              <Link
+                to="/#contact"
+                onClick={onClose}
+                className="block w-full text-center px-4 py-2 rounded-md text-white bg-finovo hover:opacity-95"
+              >
+                Book a demo
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Link
+                to="/app"
+                onClick={onClose}
+                className="block w-full text-center px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-50"
+              >
+                Go to Dashboard
+              </Link>
+              <button
+                onClick={async () => { await onLogout?.(); onClose(); }}
+                className="block w-full text-center px-4 py-2 rounded-md bg-gray-900 text-white hover:opacity-90"
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </nav>
       </div>
     </div>,
@@ -119,6 +137,7 @@ export default function SiteHeader() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [activeId, setActiveId] = useState("home");
   const location = useLocation();
+  const nav = useNavigate();
 
   // Auth state
   useEffect(() => {
@@ -174,6 +193,11 @@ export default function SiteHeader() {
       isActive ? "text-finovo font-semibold" : "text-gray-700 hover:text-finovo"
     }`;
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    nav("/login", { replace: true });
+  };
+
   return (
     <header
       className={
@@ -186,7 +210,6 @@ export default function SiteHeader() {
         {/* Logo */}
         <div className="flex items-center space-x-2">
           <Link to="/#home" className="flex items-center">
-          
             <span className="text-2xl font-extrabold tracking-tight text-gray-900">
               Finovo
             </span>
@@ -217,24 +240,43 @@ export default function SiteHeader() {
 
         {/* Right actions */}
         <div className="flex items-center gap-4">
-          <Link
-            to="/login"
-            className="hidden md:inline-block text-sm font-medium text-gray-700 hover:text-finovo"
-          >
-            Log In
-          </Link>
-          <Link
-            to="/register"
-            className="hidden md:inline-block text-sm font-medium text-gray-700 hover:text-finovo"
-          >
-            Sign Up
-          </Link>
-          <Link
-            to="/#contact"
-            className="hidden md:inline-block px-5 py-2 rounded-full bg-finovo text-white font-semibold shadow-md hover:opacity-95"
-          >
-            Book a demo
-          </Link>
+          {!loggedIn ? (
+            <>
+              <Link
+                to="/login"
+                className="hidden md:inline-block text-sm font-medium text-gray-700 hover:text-finovo"
+              >
+                Log In
+              </Link>
+              <Link
+                to="/register"
+                className="hidden md:inline-block text-sm font-medium text-gray-700 hover:text-finovo"
+              >
+                Sign Up
+              </Link>
+              <Link
+                to="/#contact"
+                className="hidden md:inline-block px-5 py-2 rounded-full bg-finovo text-white font-semibold shadow-md hover:opacity-95"
+              >
+                Book a demo
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/app"
+                className="hidden md:inline-block text-sm font-medium text-gray-700 hover:text-finovo"
+              >
+                Dashboard
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="hidden md:inline-block text-sm font-medium px-4 py-2 rounded-md bg-gray-900 text-white hover:opacity-90"
+              >
+                Logout
+              </button>
+            </>
+          )}
 
           {/* Mobile hamburger */}
           <button
@@ -251,7 +293,12 @@ export default function SiteHeader() {
       </nav>
 
       {/* Mobile drawer rendered via portal */}
-      <MobileDrawer open={mobileOpen} onClose={() => setMobileOpen(false)} loggedIn={loggedIn} />
+      <MobileDrawer
+        open={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        loggedIn={loggedIn}
+        onLogout={handleLogout}
+      />
     </header>
   );
 }

@@ -1,492 +1,633 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+// src/Onboard.jsx
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import supabase from "./lib/supabase";
+import { loadActiveTenantOrFirst } from "./lib/onboarding";
 import { getActiveTenant, saveActiveTenant } from "./lib/tenantState";
-import ProgressChecklist from "./components/ProgressChecklist";
-import CsvClientImport from "./components/CsvClientImport";
-import {
-  debounce,
-  loadActiveTenantOrFirst,
-  saveTenantPatch,
-  computeProgress,
-  ensureDemoClient,
-  createDraftInvoice,
-} from "./lib/onboarding";
+import OnboardStepper from "./components/onboard/OnboardStepper";
+import AnimatedCard from "./components/onboard/AnimatedCard";
 
-// Finovo colors
-const cBrand = "#3c6b5b";
-const cBrandLight = "#d9f0e1";
+function slugify(name) {
+  return name
+    .toString()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/--+/g, "-")
+    .slice(0, 40) || "tenant";
+}
+
+async function ensureUniqueSlug(base) {
+  let candidate = base;
+  for (let i = 0; i < 5; i++) {
+    const { data, error } = await supabase
+      .from("tenants")
+      .select("id")
+      .eq("slug", candidate)
+      .limit(1);
+    if (error) throw error;
+    if (!data || data.length === 0) return candidate;
+    candidate = `${base}-${Math.random().toString(36).slice(2, 6)}`;
+  }
+  return `${base}-${Date.now().toString(36).slice(-4)}`;
+}
+
+// UPPERCASE + ensure trailing dash
+function normalizePrefix(v) {
+  let s = (v || "INV").toString().trim().toUpperCase();
+  if (!s.endsWith("-")) s += "-";
+  return s;
+}
+
+// drop empty strings so DB defaults work
+function prune(obj) {
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === "" || v === undefined) continue;
+    out[k] = v;
+  }
+  return out;
+}
+
+/* -------------------- MICRO CONFETTI (no deps) -------------------- */
+function MicroConfetti({ count = 28, duration = 1200 }) {
+  const [pieces, setPieces] = useState([]);
+
+  useEffect(() => {
+    const colors = [
+      "#26BA99", "#10B981", "#3B82F6", "#6366F1",
+      "#F59E0B", "#EF4444", "#14B8A6", "#8B5CF6",
+    ];
+    const gen = Array.from({ length: count }).map((_, i) => {
+      // random vector for each piece (slight outward + downward)
+      const angle = (Math.random() * Math.PI) - Math.PI / 2; // left/up to right/up
+      const speed = 80 + Math.random() * 120;
+      const dx = Math.cos(angle) * speed;
+      const dy = Math.sin(angle) * speed + 120; // bias downwards
+      return {
+        id: i,
+        left: 50 + (Math.random() * 40 - 20), // around center %
+        top: 32 + Math.random() * 8,          // near the header icon
+        rotate: Math.floor(Math.random() * 360),
+        color: colors[i % colors.length],
+        delay: Math.random() * 0.2, // 0–20% of duration
+        dx,
+        dy,
+      };
+    });
+    setPieces(gen);
+    const t = setTimeout(() => setPieces([]), duration + 500);
+    return () => clearTimeout(t);
+  }, [count, duration]);
+
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-visible">
+      <style>{`
+        @keyframes confetti-burst {
+          0%   { opacity: 1; transform: translate(0,0) rotate(0deg) scale(1); }
+          100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(720deg) scale(0.9); }
+        }
+      `}</style>
+      {pieces.map(p => (
+        <span
+          key={p.id}
+          style={{
+            position: "absolute",
+            left: `${p.left}%`,
+            top: `${p.top}%`,
+            width: "7px",
+            height: "11px",
+            background: p.color,
+            borderRadius: "1px",
+            transform: `rotate(${p.rotate}deg)`,
+            transformOrigin: "center",
+            animation: `confetti-burst ${duration}ms ease-out ${Math.round(p.delay * duration)}ms forwards`,
+            // custom vector per piece
+            ["--dx"]: `${p.dx}px`,
+            ["--dy"]: `${p.dy}px`,
+            boxShadow: "0 0 0.5px rgba(0,0,0,0.15)",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+/* ------------------------------------------------------------------ */
 
 export default function Onboard() {
-  const [tenant, setTenant] = useState(null);
-  const [hasClient, setHasClient] = useState(false);
-  const [hasInvoice, setHasInvoice] = useState(false);
-  const [step, setStep] = useState(1);
-  const [working, setWorking] = useState(false);
-  const [toast, setToast] = useState(null);
-  const prevProgressRef = useRef(0);
+  const nav = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [err, setErr] = useState("");
 
-  const debouncedSave = useRef(
-    debounce(async (id, patch) => {
-      try {
-        const saved = await saveTenantPatch(id, patch);
-        setTenant(saved);
-        setToast("Saved");
-        setTimeout(() => setToast(null), 900);
-      } catch (e) {
-        console.error(e);
-        setToast("Save failed");
-      }
-    }, 500)
-  ).current;
+  // Steps: 0=Basics, 1=Contact, 2=Invoicing, 3=Review
+  const [step, setStep] = useState(0);
+  const totalSteps = 4;
 
-  // Load active tenant and basic stats
+  // Step state
+  const [company, setCompany] = useState({ business_name: "", currency: "EUR", invoice_prefix: "INV" });
+  const [slugPreview, setSlugPreview] = useState("");
+  const [contact, setContact] = useState({
+    owner_email: "",
+    tax_id: "",
+    whatsapp_country_code: "",
+    phone: "",
+    address: "",
+    timezone: "Europe/Lisbon",
+  });
+  const [prefs, setPrefs] = useState({
+    last_invoice_no: 0,
+    pdf_footer: "",
+    brand_color: "#26BA99",
+    logo_url: "",
+  });
+
+  // NEW: success state (show celebratory screen instead of instant redirect)
+  const [created, setCreated] = useState(false);
+  const [createdTenant, setCreatedTenant] = useState(null);
+
   useEffect(() => {
+    let mounted = true;
     (async () => {
+      setLoading(true); setErr("");
+      let { data: { session } = {} } = await supabase.auth.getSession();
+      if (!session) {
+        await new Promise(r => setTimeout(r, 60));
+        ({ data: { session } = {} } = await supabase.auth.getSession());
+      }
+      if (!session) { nav("/login", { replace: true }); return; }
+
+      if (session?.user?.email) {
+        setContact(c => ({ ...c, owner_email: c.owner_email || session.user.email }));
+      }
+
       try {
         const t = await loadActiveTenantOrFirst(getActiveTenant);
-        if (!t) return;
-        setTenant(t);
-        saveActiveTenant({ slug: t.slug, id: t.id });
-
-        const [{ count: cc }, { count: ic }] = await Promise.all([
-          supabase.from("clients").select("*", { count: "exact", head: true }).eq("tenant_id", t.id),
-          supabase.from("invoices").select("*", { count: "exact", head: true }).eq("tenant_id", t.id),
-        ]);
-        setHasClient((cc || 0) > 0);
-        setHasInvoice((ic || 0) > 0);
+        if (!mounted) return;
+        if (t) { saveActiveTenant(t); nav("/app", { replace: true }); return; }
       } catch (e) {
-        console.error(e);
+        if (mounted) setErr(e.message || "Failed to load onboarding.");
+      } finally {
+        if (mounted) setLoading(false);
       }
     })();
-  }, []);
 
-  const progress = useMemo(
-    () => computeProgress({ tenant, hasClient, hasInvoice }),
-    [tenant, hasClient, hasInvoice]
-  );
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      if (!session) nav("/login", { replace: true });
+    });
+    return () => sub?.subscription?.unsubscribe?.();
+  }, [nav]);
 
-  // CONFETTI when progress hits 100
   useEffect(() => {
-    const prev = prevProgressRef.current;
-    if (progress === 100 && prev < 100) {
-      (async () => {
-        try {
-          const { default: confetti } = await import("canvas-confetti");
-          confetti({ particleCount: 120, spread: 70, origin: { y: 0.3 } });
-        } catch (e) {
-          // ignore if dep missing in dev
-          console.warn("Confetti unavailable:", e.message);
-        }
-      })();
-    }
-    prevProgressRef.current = progress;
-  }, [progress]);
+    setSlugPreview(slugify(company.business_name || ""));
+  }, [company.business_name]);
 
-  function patch(field, value) {
-    if (!tenant) return;
-    const next = { ...tenant, [field]: value };
-    setTenant(next);
-    debouncedSave(tenant.id, { [field]: value });
+  function nextFromBasics(e) {
+    e?.preventDefault?.();
+    setErr("");
+    const name = company.business_name?.trim();
+    if (!name) { setErr("Company name is required."); return; }
+    setStep(1);
   }
+  function nextFromContact(e) { e?.preventDefault?.(); setErr(""); setStep(2); }
+  function nextFromPrefs(e) { e?.preventDefault?.(); setErr(""); setStep(3); }
 
-  // Extract dominant color from uploaded logo (before upload)
-  async function extractDominantColor(file) {
+  const nextInvoiceSample = useMemo(() => {
+    const basePrefix = normalizePrefix(company.invoice_prefix).replace(/-+$/g, "");
+    const nextNo = (Number.isFinite(+prefs.last_invoice_no) ? (+prefs.last_invoice_no + 1) : 1);
+    return `${basePrefix ? basePrefix + "-" : ""}${String(nextNo).padStart(4, "0")}`;
+  }, [company.invoice_prefix, prefs.last_invoice_no]);
+
+  async function createWorkspace(e) {
+    e?.preventDefault?.();
+    setErr("");
+
+    const name = company.business_name?.trim();
+    if (!name) { setErr("Company name is required."); setStep(0); return; }
+
     try {
-      const bmp = await createImageBitmap(file);
-      const w = Math.min(120, bmp.width || 120);
-      const h = Math.min(120, bmp.height || 120);
-      const canvas = document.createElement("canvas");
-      canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(bmp, 0, 0, w, h);
-      const img = ctx.getImageData(0, 0, w, h).data;
-      let r = 0, g = 0, b = 0, c = 0;
-      const stride = 8; // sample every 8th pixel
-      for (let i = 0; i < img.length; i += 4 * stride) {
-        r += img[i]; g += img[i + 1]; b += img[i + 2]; c++;
-      }
-      if (!c) return null;
-      r = Math.round(r / c); g = Math.round(g / c); b = Math.round(b / c);
-      const toHex = (x) => x.toString(16).padStart(2, "0");
-      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+      setSubmitting(true);
+      const { data: { session } = {} } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not signed in");
+
+      const base = slugify(name);
+      const slug = await ensureUniqueSlug(base);
+      const normalizedPrefix = normalizePrefix(company.invoice_prefix);
+
+      const rawPayload = {
+        business_name: name,
+        slug,
+        currency: (company.currency || "EUR").toUpperCase(),
+        invoice_prefix: normalizedPrefix,
+        number_prefix_invoice: normalizedPrefix,
+        timezone: contact.timezone || "Europe/Lisbon",
+        owner_email: contact.owner_email || null,
+        tax_id: contact.tax_id || null,
+        whatsapp_country_code: contact.whatsapp_country_code || null,
+        phone: contact.phone || null,
+        address: contact.address || null,
+        last_invoice_no: Number.isFinite(+prefs.last_invoice_no) ? +prefs.last_invoice_no : 0,
+        pdf_footer: prefs.pdf_footer || null,
+        brand_color: prefs.brand_color || null,
+        logo_url: prefs.logo_url || null,
+      };
+
+      const payload = prune(rawPayload);
+
+      const { data: tenant, error: tErr } = await supabase
+        .from("tenants")
+        .insert(payload)
+        .select("*")
+        .maybeSingle();
+      if (tErr) throw tErr;
+
+      const { error: mErr } = await supabase
+        .from("user_tenants")
+        .insert({ user_id: session.user.id, tenant_id: tenant.id, role: "owner" });
+      if (mErr) throw mErr;
+
+      saveActiveTenant(tenant);
+
+      // 💥 DO NOT redirect immediately — show success first
+      setCreatedTenant(tenant);
+      setCreated(true);
     } catch (e) {
-      console.warn("Color extract failed:", e.message);
-      return null;
-    }
-  }
-
-  async function onUploadLogo(e) {
-    if (!tenant) return;
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setWorking(true);
-    try {
-      // 1) compute color first and save it
-      const color = await extractDominantColor(file);
-      if (color) patch("brand_color", color);
-
-      // 2) upload logo
-      const path = `${tenant.slug}/logo.${file.name.split(".").pop() || "png"}`;
-      const { error: upErr } = await supabase.storage.from("brand").upload(path, file, {
-        cacheControl: "3600",
-        upsert: true,
-      });
-      if (upErr && upErr.message?.includes("already exists") === false) throw upErr;
-
-      const { data: pub } = supabase.storage.from("brand").getPublicUrl(path);
-      patch("logo_url", pub.publicUrl);
-    } catch (e) {
-      console.error(e);
-      setToast("Upload failed");
-    } finally {
-      setWorking(false);
-    }
-  }
-
-  async function addDemoClient() {
-    if (!tenant) return;
-    setWorking(true);
-    try {
-      await ensureDemoClient(tenant.id);
-      setHasClient(true);
-      setToast("Demo client added");
-    } catch (e) {
-      console.error(e);
-      setToast("Failed to add demo client");
-    } finally {
-      setWorking(false);
-    }
-  }
-
-  async function createAndPdf() {
-    if (!tenant) return;
-    setWorking(true);
-    try {
-      const client = await ensureDemoClient(tenant.id);
-      const { invoice } = await createDraftInvoice(tenant, client, tenant.currency || "EUR");
-
-      // request PDF from your Netlify function
-      const res = await fetch("/.netlify/functions/invoice-pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tenant: tenant.slug, invoice_id: invoice.id, invoice_number: invoice.number }),
-      });
-      const data = await res.json();
-
-      if (res.ok && (data?.signedUrl || data?.pdfUrl)) {
-        window.open(data.signedUrl || data.pdfUrl, "_blank");
-        setHasInvoice(true);
-        setToast("PDF generated");
+      if (e?.code === "23505") {
+        setErr("That workspace URL is taken. Try a different company name.");
+        setStep(0);
       } else {
-        throw new Error(data?.error || "PDF failed");
+        setErr(e.message || "Failed to create workspace.");
       }
-    } catch (e) {
-      console.error(e);
-      setToast("Could not generate PDF");
     } finally {
-      setWorking(false);
+      setSubmitting(false);
     }
   }
 
-  const items = [
-    { label: "Set business basics", done: !!(tenant?.business_name && tenant?.currency && tenant?.invoice_prefix) },
-    { label: "Add brand (logo/color/footer)", done: !!(tenant?.brand_color || tenant?.logo_url || tenant?.footer_note) },
-    { label: "Add a client", done: hasClient },
-    { label: "Send your first invoice", done: hasInvoice },
-  ];
+// --- Refactored Success screen component ---
+function SuccessScreen({ tenant }) {
+  return (
+    <div className="min-h-screen bg-[#E9F5EE] flex items-center justify-center p-6">
+      <div className="w-full max-w-xl mx-auto text-center rounded-3xl bg-white shadow-2xl p-8 sm:p-12 border border-gray-200">
+        
+        {/* Animated Checkmark */}
+        <div className="mx-auto mb-6 h-20 w-20 rounded-full bg-emerald-50 grid place-items-center relative">
+          <svg viewBox="0 0 52 52" className="h-12 w-12 text-emerald-500" aria-hidden="true">
+            <path
+              d="M14 27l8 8 16-18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <animate attributeName="stroke-dasharray" from="0,60" to="60,0" dur="0.8s" fill="freeze" />
+            </path>
+          </svg>
+        </div>
 
-  if (!tenant) {
+        {/* Header Section */}
+        <h1 className="text-3xl font-bold text-gray-900 leading-tight">
+          Success! Your workspace is ready.
+        </h1>
+        <p className="mt-3 text-gray-600 max-w-md mx-auto">
+          Welcome aboard! Your new workspace, **{tenant?.business_name}**, has been successfully created and is ready for action.
+        </p>
+
+        {tenant?.slug && (
+          <div className="mt-5 inline-flex items-center space-x-2 text-sm text-gray-500">
+            <span className="font-semibold">URL:</span>
+            <span className="font-mono bg-gray-100 px-2 py-1 rounded-md text-gray-800 break-all">{tenant.slug}</span>
+          </div>
+        )}
+
+        <hr className="my-8 border-gray-200" />
+        
+        {/* Call-to-action (CTA) Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button
+            onClick={() => nav("app", { replace: true })}
+            className="w-full px-6 py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition duration-300 shadow-lg transform hover:scale-105"
+          >
+            Go to Dashboard
+          </button>
+          <button
+            onClick={() => { window.location.href = "/#features"; }}
+            className="w-full px-6 py-3 rounded-xl border border-gray-300 bg-white text-gray-700 font-semibold hover:bg-gray-50 transition duration-300"
+          >
+            Explore Products
+          </button>
+          <button
+            onClick={() => { window.location.href = "/#contact"; }}
+            className="w-full px-6 py-3 rounded-xl border border-amber-400 bg-amber-50 text-amber-800 font-semibold hover:bg-amber-100 transition duration-300"
+          >
+            Upgrade Plan
+          </button>
+        </div>
+
+        {/* Tip/Info Section */}
+        <p className="mt-6 text-sm text-gray-500">
+          You can manage your workspace settings anytime under **Company** → **Preferences**.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+  if (loading) {
     return (
-      <div className="p-10 text-center text-gray-600">
-        <div className="animate-pulse inline-block h-3 w-3 rounded-full bg-gray-300 mr-2" />
-        Loading your workspace...
+      <div className="min-h-screen grid place-items-center">
+        <div className="text-gray-600 flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-gray-300 animate-pulse" />
+          Loading your workspace…
+        </div>
       </div>
     );
   }
 
+  if (created) {
+    return <SuccessScreen tenant={createdTenant} />;
+  }
+
+  const titles = ["Company basics", "Identity & contact", "Invoicing & branding", "Review & finish"];
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      {/* Top bar */}
-      <div className="sticky top-0 z-20 border-b border-gray-200/70 bg-white/70 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
-          <span className="font-semibold text-gray-900">Onboarding</span>
-          <span className="text-gray-400">·</span>
-          <Stepper step={step} setStep={setStep} />
-          <div className="ml-auto text-sm text-gray-500">
-            {toast && <span className="rounded-md bg-gray-100 px-2 py-1">{toast}</span>}
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-xl mx-auto p-6">
+        <OnboardStepper step={step} total={totalSteps} title={titles[step]} />
+
+        {err && (
+          <div className="mb-4 rounded-lg bg-red-50 text-red-700 border border-red-200 px-4 py-2 text-sm">
+            {err}
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* Content */}
-      <div className="mx-auto max-w-6xl px-4 py-8 grid grid-cols-1 md:grid-cols-[1.5fr_1fr] gap-6">
-        {/* Left column: cards */}
-        <div className="space-y-6">
-          {step === 1 && (
-            <Card title="Basics" subtitle="We’ll use these to generate invoices.">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Text label="Business name" value={tenant.business_name || ""} onChange={(v) => patch("business_name", v)} />
-                <Text label="Invoice prefix" value={tenant.invoice_prefix || "INV"} onChange={(v) => patch("invoice_prefix", v.toUpperCase())} />
-                <Text label="Default currency" value={tenant.currency || "EUR"} onChange={(v) => patch("currency", v.toUpperCase())} />
-                <Text label="WhatsApp country code" placeholder="+254" value={tenant.whatsapp_country || ""} onChange={(v) => patch("whatsapp_country", v)} />
-              </div>
-              <div className="flex justify-end">
-                <NextButton onClick={() => setStep(2)} />
-              </div>
-            </Card>
-          )}
+        {step === 0 && (
+          <AnimatedCard inView>
+            <h1 className="text-xl font-semibold">Name your company</h1>
+            <p className="text-sm text-gray-600 mb-4">This will appear on invoices and your workspace URL. You can change it later.</p>
 
-          {step === 2 && (
-            <Card title="Brand" subtitle="Make it yours. You can change this anytime.">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Text label="Footer note" placeholder="e.g. Thank you for your business." value={tenant.footer_note || ""} onChange={(v) => patch("footer_note", v)} />
-                <Text label="Brand color" value={tenant.brand_color || cBrand} onChange={(v) => patch("brand_color", v)} type="color" />
-                <div>
-                  <label className="text-sm text-gray-600">Logo</label>
-                  <div className="mt-1 flex items-center gap-3">
-                    {tenant.logo_url ? (
-                      <img src={tenant.logo_url} alt="logo" className="h-10 w-10 rounded object-cover ring-1 ring-gray-200" />
-                    ) : (
-                      <div className="h-10 w-10 rounded bg-gray-100 ring-1 ring-gray-200" />
-                    )}
-                    <input type="file" accept="image/*" onChange={onUploadLogo} className="text-sm" />
-                  </div>
-                  <p className="mt-2 text-xs text-gray-500">
-                    Tip: We auto-pick a brand color from your logo. You can tweak it.
+            <form onSubmit={nextFromBasics} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Company name</label>
+                <input
+                  value={company.business_name}
+                  onChange={(e) => setCompany(c => ({ ...c, business_name: e.target.value }))}
+                  placeholder="Acme Ltd"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-finovo"
+                />
+                {slugPreview && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Workspace URL: <span className="font-mono">{slugPreview}</span>
+                    <span className="text-gray-400"> (we’ll ensure it’s unique)</span>
                   </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                  <input
+                    value={company.currency}
+                    onChange={(e) => setCompany(c => ({ ...c, currency: e.target.value }))}
+                    placeholder="EUR"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Invoice prefix</label>
+                  <input
+                    value={company.invoice_prefix}
+                    onChange={(e) => setCompany(c => ({ ...c, invoice_prefix: e.target.value }))}
+                    placeholder="INV"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">We’ll format it as {normalizePrefix(company.invoice_prefix)} for numbering.</p>
                 </div>
               </div>
-              <div className="flex justify-between">
-                <BackButton onClick={() => setStep(1)} />
-                <NextButton onClick={() => setStep(3)} />
-              </div>
-            </Card>
-          )}
 
-          {step === 3 && (
-            <Card title="Add a client" subtitle="Add one client (or import a CSV) and you’re ready to send.">
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={addDemoClient}
-                    className="inline-flex items-center gap-2 rounded-lg bg-gray-900 text-white px-4 py-2 hover:opacity-90 disabled:opacity-50"
-                    disabled={working}
-                  >
-                    Add demo client
-                  </button>
-                  <a
-                    href="/"
-                    className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-gray-700 hover:bg-gray-50"
-                    title="Open app to add real clients"
-                  >
-                    Open app to add real client →
-                  </a>
+              <div className="flex items-center justify-between gap-3 pt-2">
+                <button type="button" onClick={() => nav("/login")} className="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button type="submit" className="px-4 py-2 rounded-lg bg-finovo text-white font-medium hover:opacity-95">Continue</button>
+              </div>
+            </form>
+          </AnimatedCard>
+        )}
+
+        {step === 1 && (
+          <AnimatedCard inView>
+            <h1 className="text-xl font-semibold">How can clients reach you?</h1>
+            <p className="text-sm text-gray-600 mb-4">Tell us how to display your company on invoices.</p>
+
+            <form onSubmit={nextFromContact} className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Owner email</label>
+                  <input
+                    type="email"
+                    value={contact.owner_email}
+                    onChange={(e) => setContact(c => ({ ...c, owner_email: e.target.value }))}
+                    placeholder="you@company.com"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  />
                 </div>
 
-                {/* CSV importer */}
-                <CsvClientImport
-                  tenantId={tenant.id}
-                  onDone={() => {
-                    setHasClient(true);
-                    setToast("Clients imported");
-                  }}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tax ID</label>
+                  <input
+                    value={contact.tax_id}
+                    onChange={(e) => setContact(c => ({ ...c, tax_id: e.target.value }))}
+                    placeholder="VAT / NIF"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp code</label>
+                  <input
+                    value={contact.whatsapp_country_code}
+                    onChange={(e) => setContact(c => ({ ...c, whatsapp_country_code: e.target.value }))}
+                    placeholder="+351"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                  <input
+                    value={contact.phone}
+                    onChange={(e) => setContact(c => ({ ...c, phone: e.target.value }))}
+                    placeholder="912 345 678"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <textarea
+                  value={contact.address}
+                  onChange={(e) => setContact(c => ({ ...c, address: e.target.value }))}
+                  placeholder="Street, City, ZIP, Country"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  rows={3}
                 />
               </div>
-              <div className="flex justify-between mt-4">
-                <BackButton onClick={() => setStep(2)} />
-                <NextButton onClick={() => setStep(4)} />
-              </div>
-            </Card>
-          )}
 
-          {step === 4 && (
-            <Card title="Send your first invoice" subtitle="We’ll create a tiny draft and show you the PDF.">
-              <div className="flex flex-col md:flex-row items-start gap-3">
-                <button
-                  type="button"
-                  onClick={createAndPdf}
-                  className="inline-flex items-center gap-2 rounded-lg bg-[--finovo] px-4 py-2 text-white hover:opacity-90 disabled:opacity-50"
-                  style={{ ["--finovo"]: tenant.brand_color || cBrand }}
-                  disabled={working}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+                <select
+                  value={contact.timezone}
+                  onChange={(e) => setContact(c => ({ ...c, timezone: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 bg-white"
                 >
-                  Create draft & open PDF
-                </button>
-                <a href="/" className="rounded-lg border px-4 py-2 text-gray-700 hover:bg-gray-50">I’ll do it later</a>
+                  <option value="Europe/Lisbon">Europe/Lisbon</option>
+                  <option value="UTC">UTC</option>
+                  <option value="Europe/London">Europe/London</option>
+                  <option value="Europe/Madrid">Europe/Madrid</option>
+                  <option value="Africa/Nairobi">Africa/Nairobi</option>
+                </select>
               </div>
-              <div className="flex justify-start mt-4">
-                <BackButton onClick={() => setStep(3)} />
+
+              <div className="flex items-center justify-between gap-3 pt-2">
+                <button type="button" onClick={() => setStep(0)} className="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">Back</button>
+                <button type="submit" className="px-4 py-2 rounded-lg bg-finovo text-white font-medium hover:opacity-95">Continue</button>
               </div>
-            </Card>
-          )}
-        </div>
+            </form>
+          </AnimatedCard>
+        )}
 
-        {/* Right column: live preview + checklist */}
-        <div className="space-y-6">
-          <InvoicePreview tenant={tenant} />
-          <ProgressChecklist progress={progress} items={[
-            { label: "Set business basics", done: !!(tenant?.business_name && tenant?.currency && tenant?.invoice_prefix) },
-            { label: "Add brand (logo/color/footer)", done: !!(tenant?.brand_color || tenant?.logo_url || tenant?.footer_note) },
-            { label: "Add a client", done: hasClient },
-            { label: "Send your first invoice", done: hasInvoice },
-          ]} />
-        </div>
+        {step === 2 && (
+          <AnimatedCard inView>
+            <h1 className="text-xl font-semibold">Invoicing & branding</h1>
+            <p className="text-sm text-gray-600 mb-4">Choose your numbering start, add a footer, and set your brand look.</p>
+
+            <form onSubmit={nextFromPrefs} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Last invoice number</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={prefs.last_invoice_no}
+                    onChange={(e) => setPrefs(p => ({ ...p, last_invoice_no: parseInt(e.target.value || "0", 10) }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Next will be: <span className="font-mono">{nextInvoiceSample}</span>
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Brand color</label>
+                  <input
+                    type="color"
+                    value={prefs.brand_color}
+                    onChange={(e) => setPrefs(p => ({ ...p, brand_color: e.target.value }))}
+                    className="w-full h-[42px] rounded-lg border border-gray-300 p-1"
+                    title="Pick your brand color"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Logo URL</label>
+                <input
+                  value={prefs.logo_url}
+                  onChange={(e) => setPrefs(p => ({ ...p, logo_url: e.target.value }))}
+                  placeholder="https://…/logo.png"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                />
+                {prefs.logo_url ? (
+                  <div className="mt-2">
+                    <img
+                      src={prefs.logo_url}
+                      alt="Logo preview"
+                      className="h-10 object-contain"
+                      onError={(e) => (e.currentTarget.style.display = "none")}
+                    />
+                  </div>
+                ) : null}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">PDF footer</label>
+                <textarea
+                  value={prefs.pdf_footer}
+                  onChange={(e) => setPrefs(p => ({ ...p, pdf_footer: e.target.value }))}
+                  placeholder="Thanks for your business. Payment due in 14 days."
+                  rows={3}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                />
+                <div className="mt-1 text-xs text-gray-500">{prefs.pdf_footer.length}/300</div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 pt-2">
+                <button type="button" onClick={() => setStep(1)} className="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">Back</button>
+                <button type="submit" className="px-4 py-2 rounded-lg bg-finovo text-white font-medium hover:opacity-95">Continue</button>
+              </div>
+            </form>
+          </AnimatedCard>
+        )}
+
+        {step === 3 && (
+          <AnimatedCard inView>
+            <h1 className="text-xl font-semibold">Review & finish</h1>
+            <p className="text-sm text-gray-600 mb-4">Double-check your details. You can edit any section.</p>
+
+            <div className="space-y-4 text-sm">
+              <section className="rounded-lg border border-gray-200 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium">Company basics</h3>
+                  <button onClick={() => setStep(0)} className="text-finovo hover:underline">Edit</button>
+                </div>
+                <div>Business name: <span className="font-medium">{company.business_name || "—"}</span></div>
+                <div>Currency: <span className="font-medium">{(company.currency || "EUR").toUpperCase()}</span></div>
+                <div>Invoice prefix: <span className="font-mono">{normalizePrefix(company.invoice_prefix)}</span></div>
+              </section>
+
+              <section className="rounded-lg border border-gray-200 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium">Identity & contact</h3>
+                  <button onClick={() => setStep(1)} className="text-finovo hover:underline">Edit</button>
+                </div>
+                <div>Email: <span className="font-medium">{contact.owner_email || "—"}</span></div>
+                <div>Tax ID: <span className="font-medium">{contact.tax_id || "—"}</span></div>
+                <div>WhatsApp: <span className="font-medium">{contact.whatsapp_country_code || ""} {contact.phone || ""}</span></div>
+                <div>Address: <span className="font-medium">{contact.address || "—"}</span></div>
+                <div>Timezone: <span className="font-medium">{contact.timezone || "Europe/Lisbon"}</span></div>
+              </section>
+
+              <section className="rounded-lg border border-gray-200 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium">Invoicing & branding</h3>
+                  <button onClick={() => setStep(2)} className="text-finovo hover:underline">Edit</button>
+                </div>
+                <div>Last invoice no: <span className="font-medium">{prefs.last_invoice_no || 0}</span></div>
+                <div>Next sample: <span className="font-mono">{nextInvoiceSample}</span></div>
+                <div>Brand color: <span className="inline-block align-middle h-3 w-6 rounded" style={{ background: prefs.brand_color }} /> <span className="ml-1">{prefs.brand_color}</span></div>
+                <div>Logo URL: <span className="font-medium truncate">{prefs.logo_url || "—"}</span></div>
+                <div>PDF footer: <span className="font-medium">{prefs.pdf_footer || "—"}</span></div>
+              </section>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 pt-4">
+              <button type="button" onClick={() => setStep(2)} className="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+                Back
+              </button>
+              <button
+                onClick={createWorkspace}
+                disabled={submitting}
+                className="px-4 py-2 rounded-lg bg-finovo text-white font-medium hover:opacity-95 disabled:opacity-60"
+              >
+                {submitting ? "Creating…" : "Create workspace"}
+              </button>
+            </div>
+          </AnimatedCard>
+        )}
       </div>
-    </div>
-  );
-}
-
-/* ---------- UI bits ---------- */
-
-function Stepper({ step, setStep }) {
-  const steps = ["Basics", "Brand", "Client", "Send"];
-  return (
-    <div className="flex items-center gap-2">
-      {steps.map((label, i) => {
-        const n = i + 1;
-        const active = n === step;
-        const done = n < step;
-        return (
-          <button
-            key={label}
-            onClick={() => setStep(n)}
-            className={`flex items-center gap-2 rounded-full px-3 py-1 text-sm transition ${
-              active ? "bg-[--finovo]/10 text-[--finovo]" : done ? "text-gray-600" : "text-gray-400"
-            }`}
-            style={{ ["--finovo"]: cBrand }}
-          >
-            <span
-              className={`inline-grid place-content-center h-5 w-5 rounded-full text-xs ${
-                active ? "bg-[--finovo] text-white" : done ? "bg-gray-200 text-gray-700" : "bg-gray-100 text-gray-500"
-              }`}
-              style={{ ["--finovo"]: cBrand }}
-            >
-              {n}
-            </span>
-            {label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function Card({ title, subtitle, children }) {
-  return (
-    <div className="rounded-2xl border border-gray-200/70 bg-white/70 backdrop-blur p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-      {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
-      <div className="mt-4">{children}</div>
-    </div>
-  );
-}
-
-function Text({ label, value, onChange, placeholder, type = "text" }) {
-  return (
-    <label className="block">
-      <div className="text-sm text-gray-600">{label}</div>
-      <input
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-[--finovo]/30"
-        style={{ ["--finovo"]: cBrand }}
-      />
-    </label>
-  );
-}
-
-function NextButton({ onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center gap-2 rounded-lg bg-[--finovo] px-4 py-2 text-white hover:opacity-90"
-      style={{ ["--finovo"]: cBrand }}
-    >
-      Continue →
-    </button>
-  );
-}
-function BackButton({ onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-gray-700 hover:bg-gray-50"
-    >
-      ← Back
-    </button>
-  );
-}
-
-function InvoicePreview({ tenant }) {
-  const clr = tenant.brand_color || cBrand;
-  const foot = tenant.footer_note || "Thank you for your business.";
-  return (
-    <div className="rounded-2xl border border-gray-200/70 bg-white shadow-sm overflow-hidden">
-      <div className="h-2" style={{ backgroundColor: clr }} />
-      <div className="p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            {tenant.logo_url ? (
-              <img src={tenant.logo_url} alt="logo" className="h-10 w-10 rounded object-cover ring-1 ring-gray-200" />
-            ) : (
-              <div className="h-10 w-10 rounded bg-gray-100 ring-1 ring-gray-200" />
-            )}
-            <div>
-              <div className="font-semibold text-gray-900">{tenant.business_name || "Your Business"}</div>
-              <div className="text-xs text-gray-500">{tenant.currency || "EUR"} · {tenant.invoice_prefix || "INV"}</div>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-sm text-gray-500">Invoice</div>
-            <div className="font-semibold text-gray-800">{(tenant.invoice_prefix || "INV")}-000001</div>
-          </div>
-        </div>
-
-        <div className="mt-4 rounded-lg border border-gray-200">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-500">
-              <tr>
-                <th className="px-3 py-2 text-left font-medium">Description</th>
-                <th className="px-3 py-2 text-right font-medium">Qty</th>
-                <th className="px-3 py-2 text-right font-medium">Unit</th>
-                <th className="px-3 py-2 text-right font-medium">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-t">
-                <td className="px-3 py-2">Service A</td>
-                <td className="px-3 py-2 text-right">1</td>
-                <td className="px-3 py-2 text-right">100.00</td>
-                <td className="px-3 py-2 text-right">100.00</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-4 flex items-center justify-end gap-6">
-          <dl className="text-sm">
-            <div className="flex justify-between gap-6">
-              <dt className="text-gray-500">Subtotal</dt>
-              <dd className="font-medium text-gray-800">100.00 {(tenant.currency || "EUR")}</dd>
-            </div>
-            <div className="flex justify-between gap-6">
-              <dt className="text-gray-500">Tax</dt>
-              <dd className="font-medium text-gray-800">23.00 {(tenant.currency || "EUR")}</dd>
-            </div>
-            <div className="mt-1 border-t pt-1 flex justify-between gap-6">
-              <dt className="text-gray-900 font-semibold">Total</dt>
-              <dd className="text-gray-900 font-semibold">123.00 {(tenant.currency || "EUR")}</dd>
-            </div>
-          </dl>
-        </div>
-
-        <div className="mt-6 rounded-lg bg-gray-50 px-3 py-2 text-center text-sm text-gray-600">{foot}</div>
-      </div>
-      <div className="h-2" style={{ backgroundColor: cBrandLight }} />
     </div>
   );
 }

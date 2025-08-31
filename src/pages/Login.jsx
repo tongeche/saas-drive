@@ -18,7 +18,8 @@ export default function Login() {
       setBusy(true);
       const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
       if (error) throw error;
-      nav("/");
+      // IMPORTANT: let AfterLogin decide -> /onboard or /app
+      nav("/after-login", { replace: true });
     } catch (e) {
       setErr(e.message || "Login failed.");
     } finally { setBusy(false); }
@@ -33,10 +34,7 @@ export default function Login() {
           {/* LEFT: Form */}
           <div className="p-8 md:p-10 lg:p-12">
             {/* Brand */}
-            <div className="flex items-center gap-2 mb-2">
-              
-            
-            </div>
+            <div className="flex items-center gap-2 mb-2" aria-hidden="true"></div>
 
             <h1 className="text-3xl font-bold text-finovo text-center mb-4">Welcome Back!</h1>
             <p className="text-gray-600 mt-1 mb-8 text-center">Let’s get you signed in securely.</p>
@@ -110,24 +108,24 @@ export default function Login() {
 
             {/* Quote card */}
             <div className="absolute bottom-6 left-6 right-6 md:left-8 md:right-8">
-  <div className="backdrop-blur bg-white/70 rounded-2xl shadow-xl px-4 py-3 md:px-5 md:py-4">
-    <div className="flex items-center gap-3">
-      {/* Profile image */}
-      <img
-        src="/assets/imgs/login-reviewer1.png"   h
-        alt="Customer reviewer"
-        className="h-10 w-10 rounded-full object-cover border border-gray-300 shadow-sm"
-      />
-      <div>
-        <div className="text-sm font-semibold text-gray-800">Customer Spotlight</div>
-        <p className="text-xs text-gray-700">
-          “Explore your numbers with clarity—Finovo keeps your books neat, your
-          cashflow visible, and your focus on growth.”
-        </p>
-      </div>
-    </div>
-  </div>
-</div>
+              <div className="backdrop-blur bg-white/70 rounded-2xl shadow-xl px-4 py-3 md:px-5 md:py-4">
+                <div className="flex items-center gap-3">
+                  {/* Profile image */}
+                  <img
+                    src="/assets/imgs/login-reviewer1.png"
+                    alt="Customer reviewer"
+                    className="h-10 w-10 rounded-full object-cover border border-gray-300 shadow-sm"
+                  />
+                  <div>
+                    <div className="text-sm font-semibold text-gray-800">Customer Spotlight</div>
+                    <p className="text-xs text-gray-700">
+                      “Explore your numbers with clarity—Finovo keeps your books neat,
+                      your cashflow visible, and your focus on growth.”
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
           </div>
           {/* /RIGHT */}
