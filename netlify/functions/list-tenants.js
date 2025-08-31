@@ -5,7 +5,7 @@ export async function handler() {
     const supa = supaAdmin();
     const q = await supa
       .from("tenants")
-      .select("id, slug, business_name")
+      .select("id, slug, business_name, currency, email_from, whatsapp_country_code")
       .order("created_at", { ascending: true });
     if (q.error) return bad(q.error.message);
     return ok(q.data || []);
@@ -13,6 +13,5 @@ export async function handler() {
     return bad(e.message || "error");
   }
 }
-
 function ok(b){return{statusCode:200,headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}}
 function bad(m){return{statusCode:400,headers:{'Content-Type':'application/json'},body:JSON.stringify({error:m})}}

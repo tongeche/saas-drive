@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tenant Login — Finovo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --finovo-green: #3c6b5b;
+      --finovo-green-dk: #335a4d;
+      --bg: #f7fafc;
+      --fg: #1f2937;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--fg);}
+    .bg-finovo { background-color: var(--finovo-green); }
+    .hover\:bg-finovo:hover { background-color: var(--finovo-green-dk); }
+    .text-finovo { color: var(--finovo-green); }
+    .border-finovo { border-color: var(--finovo-green); }
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.5);
+      display: none; align-items:center; justify-content:center; z-index: 100;
+    }
+    .modal-overlay.show { display:flex; }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+ <!-- HERO — Finovo Dashboard Mockup (replace your current screenshot DIV with this) -->
+<div class="relative mx-auto max-w-7xl p-4 bg-transparent">
+  <div
+    class="w-full rounded-3xl shadow-2xl ring-1 ring-black/5 overflow-hidden"
+    style="background: linear-gradient(180deg, #E9F5EE 0%, #F3F4F6 100%);"
+  >
+    <!-- Frame -->
+    <div class="flex">
+      <!-- Sidebar -->
+      <aside class="hidden md:flex w-64 flex-col border-r border-black/5"
+             style="background:#F3F4F6">
+        <div class="px-6 py-5 text-xl font-semibold tracking-tight">Finovo</div>
+        <nav class="px-3 pb-6 space-y-1 text-sm">
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-white shadow-sm"
+             href="#">
+            <svg class="h-4 w-4 opacity-70" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12l9-9 9 9-1.5 1.5L12 5.5 4.5 13.5 3 12z"/><path d="M5 11h14v9H5z"/></svg>
+            Dashboard
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/70" href="#">
+            <svg class="h-4 w-4 opacity-70" viewBox="0 0 24 24" fill="currentColor"><path d="M3 7h18v2H3zM3 11h18v2H3zM3 15h12v2H3z"/></svg>
+            Invoices
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/70" href="#">
+            <svg class="h-4 w-4 opacity-70" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v14H7l-3 3z"/></svg>
+            Quotes
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/70" href="#">
+            <svg class="h-4 w-4 opacity-70" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zM2 22a10 10 0 0120 0H2z"/></svg>
+            Clients
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/70" href="#">
+            <svg class="h-4 w-4 opacity-70" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h18v8H3zM7 3h10v6H7z"/></svg>
+            Products
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/70" href="#">
+            <svg class="h-4 w-4 opacity-70" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1v22M1 12h22"/></svg>
+            Reports
+          </a>
+        </nav>
+        <div class="mt-auto p-4">
+          <div class="rounded-xl p-4 text-xs shadow-sm" style="background:#E9F5EE">
+            <div class="font-semibold mb-1">Balance</div>
+            <div class="text-2xl font-bold tracking-tight">€8,636.80</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main -->
+      <section class="flex-1">
+        <!-- Top bar -->
+        <div class="flex items-center justify-between px-5 py-4">
+          <div class="hidden md:block text-sm text-black/60">Test Mode</div>
+          <div class="flex items-center gap-3 w-full md:w-auto md:min-w-[420px]">
+            <div class="flex items-center gap-2 flex-1 md:flex-none rounded-xl bg-white/70 backdrop-blur px-3 py-2 shadow-sm ring-1 ring-black/5">
+              <svg class="h-4 w-4 opacity-60" viewBox="0 0 24 24" fill="currentColor"><path d="M21 21l-4.35-4.35M10 18a8 8 0 110-16 8 8 0 010 16z"/></svg>
+              <input class="w-full bg-transparent outline-none text-sm" placeholder="Search…" />
+            </div>
+            <button class="hidden md:inline-flex items-center rounded-xl bg-white/70 px-3 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-white">
+              + New
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-5 pb-5">
+          <div class="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-4">
+            <div class="text-xs uppercase tracking-wide text-black/50">Total Sales</div>
+            <div class="mt-2 text-2xl font-bold">$124,500</div>
+            <div class="text-xs text-green-600 mt-1">+12% MoM</div>
+          </div>
+          <div class="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-4">
+            <div class="text-xs uppercase tracking-wide text-black/50">Pending Invoices</div>
+            <div class="mt-2 text-2xl font-bold">18</div>
+            <div class="text-xs text-amber-600 mt-1">Total value: $8,100</div>
+          </div>
+          <div class="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-4">
+            <div class="text-xs uppercase tracking-wide text-black/50">Quotes Sent</div>
+            <div class="mt-2 text-2xl font-bold">34</div>
+            <div class="text-xs text-black/60 mt-1">Response rate: 65%</div>
+          </div>
+          <div class="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-4">
+            <div class="text-xs uppercase tracking-wide text-black/50">New Clients</div>
+            <div class="mt-2 text-2xl font-bold">7</div>
+            <div class="text-xs text-black/60 mt-1">This month</div>
+          </div>
+        </div>
+
+        <!-- Grids: Quotes & Invoices -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 px-5 pb-8">
+          <!-- Quotes -->
+          <div class="lg:col-span-1 rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-black/5">
+              <div class="font-semibold">Recent Quotes</div>
+              <button class="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5">New Quote</button>
+            </div>
+            <ul class="divide-y divide-black/5 text-sm">
+              <li class="flex items-center justify-between px-4 py-3">
+                <div>
+                  <div class="font-medium">Q-2045 · Tech Solutions</div>
+                  <div class="text-black/60">Website revamp</div>
+                </div>
+                <div class="text-right">
+                  <div class="font-semibold">$3,200</div>
+                  <span class="inline-flex items-center text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-xs">Accepted</span>
+                </div>
+              </li>
+              <li class="flex items-center justify-between px-4 py-3">
+                <div>
+                  <div class="font-medium">Q-2046 · Acme Inc.</div>
+                  <div class="text-black/60">Annual support</div>
+                </div>
+                <div class="text-right">
+                  <div class="font-semibold">$1,480</div>
+                  <span class="inline-flex items-center text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full text-xs">Pending</span>
+                </div>
+              </li>
+              <li class="flex items-center justify-between px-4 py-3">
+                <div>
+                  <div class="font-medium">Q-2047 · Global Innovations</div>
+                  <div class="text-black/60">On-site training</div>
+                </div>
+                <div class="text-right">
+                  <div class="font-semibold">$950</div>
+                  <span class="inline-flex items-center text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full text-xs">Declined</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Invoices -->
+          <div class="lg:col-span-2 rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-black/5">
+              <div class="font-semibold">Invoices</div>
+              <div class="flex items-center gap-2">
+                <div class="hidden md:flex items-center gap-2 rounded-lg px-2 py-1 ring-1 ring-black/10">
+                  <svg class="h-4 w-4 opacity-60" viewBox="0 0 24 24" fill="currentColor"><path d="M21 21l-4.35-4.35M10 18a8 8 0 110-16 8 8 0 010 16z"/></svg>
+                  <input class="bg-transparent outline-none text-sm" placeholder="Search invoices…" />
+                </div>
+                <button class="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5">New Invoice</button>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-sm">
+                <thead class="bg-[#F3F4F6] text-black/60">
+                  <tr>
+                    <th class="text-left px-4 py-2">Invoice #</th>
+                    <th class="text-left px-4 py-2">Client</th>
+                    <th class="text-left px-4 py-2">Due</th>
+                    <th class="text-left px-4 py-2">Status</th>
+                    <th class="text-right px-4 py-2">Amount</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-black/5">
+                  <tr>
+                    <td class="px-4 py-2 font-medium">I-001</td>
+                    <td class="px-4 py-2">Tech Solutions Co.</td>
+                    <td class="px-4 py-2">Sep 15, 2025</td>
+                    <td class="px-4 py-2">
+                      <span class="inline-flex items-center text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-xs">Paid</span>
+                    </td>
+                    <td class="px-4 py-2 text-right font-semibold">$5,200</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-2 font-medium">I-014</td>
+                    <td class="px-4 py-2">Acme Inc.</td>
+                    <td class="px-4 py-2">Oct 03, 2025</td>
+                    <td class="px-4 py-2">
+                      <span class="inline-flex items-center text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full text-xs">Due Soon</span>
+                    </td>
+                    <td class="px-4 py-2 text-right font-semibold">$1,980</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-2 font-medium">I-017</td>
+                    <td class="px-4 py-2">Global Innovations</td>
+                    <td class="px-4 py-2">Overdue</td>
+                    <td class="px-4 py-2">
+                      <span class="inline-flex items-center text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full text-xs">Overdue</span>
+                    </td>
+                    <td class="px-4 py-2 text-right font-semibold">$3,450</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="px-5 pb-8">
+          <div class="rounded-2xl shadow-sm ring-1 ring-black/5 p-4 flex flex-wrap gap-3"
+               style="background:#E9F5EE">
+            <button class="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
+              Create Quote
+            </button>
+            <button class="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
+              Create Invoice
+            </button>
+            <button class="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
+              Add Client
+            </button>
+            <button class="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
+              Export CSV
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

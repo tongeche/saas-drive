@@ -2,20 +2,20 @@
 	"siteId": "f2d4c39c-ee58-4146-b985-bd0d2abcd5c2",
 	"geolocation": {
 		"data": {
-			"city": "Porto",
+			"city": "Braga",
 			"country": {
 				"code": "PT",
 				"name": "Portugal"
 			},
 			"subdivision": {
-				"code": "13",
-				"name": "Porto"
+				"code": "03",
+				"name": "Braga"
 			},
 			"timezone": "Europe/Lisbon",
-			"latitude": 41.2034,
-			"longitude": -8.6022,
-			"postalCode": "4465-120"
+			"latitude": 41.5515,
+			"longitude": -8.4204,
+			"postalCode": "4700-442"
 		},
-		"timestamp": 1756491725853
+		"timestamp": 1756578445693
 	}
 }

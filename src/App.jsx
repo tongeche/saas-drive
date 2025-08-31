@@ -1,311 +1,301 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import supabase from "./lib/supabase";
+import Onboard from "./Onboard";
+import TenantProfile from "./TenantProfile";
+import { loadMyTenants, getActiveTenant, saveActiveTenant } from "./lib/tenantState";
+import { listClients, createClient as apiCreateClient } from "./lib/clients";
+import { createInvoice as apiCreateInvoice, sendInvoicePdf } from "./lib/invoices";
+import { whatsappShareLink } from "./lib/share";
 
 export default function App() {
+  // auth session (for header only)
+  const [session, setSession] = useState(null);
+
+  // tenants + active + settings panel
   const [tenants, setTenants] = useState([]);
-  const [tenant, setTenant]   = useState(""); // slug
-  const [result, setResult]   = useState("—");
+  const [tenant, setTenant] = useState(getActiveTenant());
+  const [showSettings, setShowSettings] = useState(false);
 
+  // clients
   const [clients, setClients] = useState([]);
-  const [clientsLoading, setClientsLoading] = useState(false);
-  const [clientUuid, setClientUuid] = useState("");
-
-  const [lastInvoice, setLastInvoice] = useState({ id: "", number: "" });
-  const [lastPdfUrl, setLastPdfUrl]   = useState("");
+  const [clientId, setClientId] = useState("");
 
   // invoice form
-  const [form, setForm] = useState({
-    issue_date: "2025-09-01",
-    due_date:   "2025-09-15",
-    currency:   "EUR",
-    subtotal:   "100",
-    tax_total:  "23",
-    total:      "123",
-    notes:      "Thank you."
+  const today = new Date().toISOString().slice(0, 10);
+  const [inv, setInv] = useState({
+    issue_date: today,
+    due_date: today,
+    currency: "KES",
+    subtotal: 100,
+    tax_total: 23,
+    total: 123,
+    notes: "Thank you.",
   });
-  const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  // create-client form
-  const [newClient, setNewClient] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    billing_address: "",
-    notes: "",
-    external_id: ""
-  });
-  const updateClient = (k) => (e) => setNewClient((c) => ({ ...c, [k]: e.target.value }));
+  const [lastInvoice, setLastInvoice] = useState(null); // {id, number}
+  const [result, setResult] = useState("—");
 
-  // load tenants from DB
+  // bootstrap: auth + tenants
   useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session || null));
+
     (async () => {
       try {
-        const res = await fetch("/.netlify/functions/list-tenants");
-        const data = await res.json().catch(() => []);
-        if (Array.isArray(data) && data.length) {
-          setTenants(data);
-          setTenant((t) => t || data[0].slug);
-        } else {
-          setTenants([]);
-          setTenant("");
+        const t = await loadMyTenants();
+        setTenants(t);
+        if (!tenant && t.length) {
+          setTenant(t[0]);
+          saveActiveTenant(t[0]);
+        } else if (tenant) {
+          const found = t.find((x) => x.id === tenant.id) || t.find((x) => x.slug === tenant.slug);
+          if (found) {
+            setTenant(found);
+            saveActiveTenant(found);
+          }
         }
       } catch (e) {
-        setResult("Failed to load tenants");
+        setResult(`Tenants error: ${e.message}`);
       }
     })();
   }, []);
 
-  // load clients when tenant changes
+  // load clients for active tenant
   useEffect(() => {
-    if (!tenant) return;
+    if (!tenant?.id) {
+      setClients([]);
+      setClientId("");
+      return;
+    }
     (async () => {
       try {
-        setClientsLoading(true);
-        const res = await fetch(`/.netlify/functions/list-clients?tenant=${tenant}`);
-        const data = await res.json().catch(() => []);
-        setClients(Array.isArray(data) ? data : []);
-        setClientUuid("");
-      } finally {
-        setClientsLoading(false);
+        const rows = await listClients(tenant.id);
+        setClients(rows);
+        if (rows.length) setClientId(rows[0].id);
+      } catch (e) {
+        setResult(`Clients error: ${e.message}`);
       }
     })();
-  }, [tenant]);
+  }, [tenant?.id]);
 
-  async function ping() {
-    const res = await fetch(`/.netlify/functions/ping?tenant=${tenant}`);
-    setResult(await res.text());
+  function onTenantChange(e) {
+    const id = e.target.value;
+    const t = tenants.find((x) => x.id === id);
+    setTenant(t || null);
+    saveActiveTenant(t || null);
+    setLastInvoice(null);
+    setResult("—");
+  }
+
+  function setInvField(k) {
+    return (e) => {
+      const v = e.target.value;
+      setInv((s) => ({ ...s, [k]: ["subtotal", "tax_total", "total"].includes(k) ? Number(v) : v }));
+    };
   }
 
   async function refreshClients() {
-    const res = await fetch(`/.netlify/functions/list-clients?tenant=${tenant}`);
-    const data = await res.json().catch(() => []);
-    setClients(Array.isArray(data) ? data : []);
-    setResult(`Loaded ${Array.isArray(data) ? data.length : 0} clients`);
+    if (!tenant?.id) return;
+    const rows = await listClients(tenant.id);
+    setClients(rows);
   }
 
-  async function createClient() {
-    if (!tenant) { setResult("Choose a tenant first."); return; }
-    if (!newClient.name.trim()) { setResult("Client name is required."); return; }
-
+  async function addClient(e) {
+    e.preventDefault();
+    if (!tenant?.id) return;
+    const form = new FormData(e.currentTarget);
+    const payload = {
+      name: form.get("name")?.trim(),
+      email: form.get("email")?.trim() || null,
+      phone: form.get("phone")?.trim() || null,
+      billing_address: form.get("address")?.trim() || null,
+      notes: form.get("notes")?.trim() || null,
+    };
+    if (!payload.name) {
+      setResult("Client name required");
+      return;
+    }
     try {
-      const res = await fetch("/.netlify/functions/create-client", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tenant, client: newClient }),
-      });
-      const data = await res.json().catch(async () => ({ raw: await res.text() }));
-      if (!res.ok) { setResult(JSON.stringify(data, null, 2)); return; }
-
-      // append to list and select it
-      setClients((cs) => [...cs, data]);
-      setClientUuid(data.id);
-      setResult(JSON.stringify({ created: data }, null, 2));
-
-      // clear form (keep external_id if you like)
-      setNewClient({ name: "", email: "", phone: "", billing_address: "", notes: "", external_id: "" });
-    } catch (err) {
-      setResult(`Error: ${err?.message || String(err)}`);
+      const c = await apiCreateClient(tenant.id, payload);
+      await refreshClients();
+      setClientId(c.id);
+      setResult(`Client created: ${c.name}`);
+      e.currentTarget.reset();
+    } catch (e) {
+      setResult(`Create client error: ${e.message}`);
     }
   }
 
   async function createInvoice() {
-    if (!tenant) { setResult("Choose a tenant first."); return; }
-    if (!clientUuid) { setResult("Pick a client first."); return; }
-
-    const payload = {
-      tenant,
-      client_uuid: clientUuid,
-      issue_date: form.issue_date,
-      due_date:   form.due_date,
-      currency:   form.currency,
-      subtotal:   Number(form.subtotal),
-      tax_total:  Number(form.tax_total),
-      total:      Number(form.total),
-      notes:      form.notes,
-      lines: [
-        { description: "Service", qty: 1, unit_price: Number(form.subtotal), line_total: Number(form.subtotal) },
-        { description: "Tax",     qty: 1, unit_price: Number(form.tax_total), line_total: Number(form.tax_total) }
-      ]
-    };
+    if (!tenant?.id) return setResult("Pick a tenant");
+    if (!clientId) return setResult("Pick a client");
     try {
-      const res = await fetch("/.netlify/functions/create-invoice", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json().catch(async () => ({ raw: await res.text() }));
-      if (data?.id && data?.number) {
-        setLastInvoice({ id: data.id, number: data.number });
-        setLastPdfUrl("");
-      }
-      setResult(JSON.stringify(data, null, 2));
-    } catch (err) {
-      setResult(`Error: ${err?.message || String(err)}`);
+      const row = await apiCreateInvoice(tenant.id, clientId, inv);
+      setLastInvoice({ id: row.id, number: row.number });
+      setResult(`Invoice created: ${row.number}`);
+    } catch (e) {
+      setResult(`Create invoice error: ${e.message}`);
     }
-  }
-
-  async function ensureSignedPdf(invoiceHint = {}) {
-    const body = { tenant, ...invoiceHint };
-    if (!body.invoice_id && lastInvoice.id) body.invoice_id = lastInvoice.id;
-    if (!body.invoice_number && lastInvoice.number) body.invoice_number = lastInvoice.number;
-    if (!body.invoice_id && !body.invoice_number) {
-      const number = window.prompt("Invoice number to generate:", "");
-      if (!number) throw new Error("No invoice number provided.");
-      body.invoice_number = number.trim();
-    }
-    const res = await fetch("/.netlify/functions/invoice-pdf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json().catch(async () => ({ raw: await res.text() }));
-    if (!res.ok) throw new Error(data?.error || "PDF failed");
-    if (data?.signedUrl) setLastPdfUrl(data.signedUrl);
-    return data;
   }
 
   async function sendPdf() {
+    if (!tenant?.slug) return setResult("Pick a tenant");
+    const number = lastInvoice?.number;
+    if (!number) return setResult("Create an invoice first");
     try {
-      const data = await ensureSignedPdf();
-      setResult(JSON.stringify(data, null, 2));
-    } catch (err) {
-      setResult(`Error: ${err?.message || String(err)}`);
+      const out = await sendInvoicePdf(tenant.slug, number);
+      setResult(JSON.stringify(out, null, 2));
+    } catch (e) {
+      setResult(`PDF error: ${e.message}`);
     }
   }
 
-  function sanitizePhone(p){ return String(p||"").replace(/[^\d]/g,""); }
-
-  async function shareWhatsApp() {
+  const waLink = useMemo(() => {
+    if (!lastInvoice?.number) return null;
     try {
-      const data = await ensureSignedPdf();
-
-      const selected = clients.find(c => c.id === clientUuid);
-      let phone = sanitizePhone(selected?.phone);
-      if (!phone) {
-        const input = window.prompt("WhatsApp phone (international, e.g. 254700000000):", "");
-        phone = sanitizePhone(input || "");
-      }
-
-      const tenantName = tenants.find(x => x.slug === tenant)?.business_name || tenant;
-      const msg =
-        `Invoice ${data.number} from ${tenantName}\n` +
-        `Total: ${form.total} ${form.currency}\n` +
-        `Due: ${form.due_date}\n` +
-        `PDF: ${data.signedUrl}`;
-
-      const base = phone ? `https://wa.me/${phone}` : `https://wa.me/`;
-      const url = `${base}?text=${encodeURIComponent(msg)}`;
-      window.open(url, "_blank", "noopener,noreferrer");
-
-      setResult(JSON.stringify({ action: "whatsapp", to: phone || "(choose in WhatsApp)", number: data.number, link: url }, null, 2));
-    } catch (err) {
-      setResult(`Error: ${err?.message || String(err)}`);
+      const parsed = JSON.parse(result || "{}");
+      const link = parsed.qrLink || parsed.signedUrl || "";
+      if (!link) return null;
+      return whatsappShareLink(lastInvoice.number, link);
+    } catch {
+      return null;
     }
-  }
+  }, [lastInvoice?.number, result]);
 
-  async function emailInvoice() {
-    try {
-      const body = { tenant };
-      if (lastInvoice.id) body.invoice_id = lastInvoice.id;
-      if (lastInvoice.number) body.invoice_number = lastInvoice.number;
-      if (!body.invoice_id && !body.invoice_number) {
-        const number = window.prompt("Invoice number:", "");
-        if (!number) { setResult("No invoice number provided."); return; }
-        body.invoice_number = number.trim();
-      }
-      const to = window.prompt("Send to email (blank = use client's email):", "");
-      if (to) body.to_email = to.trim();
-
-      const res = await fetch("/.netlify/functions/email-invoice", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json().catch(async () => ({ raw: await res.text() }));
-      setResult(JSON.stringify(data, null, 2));
-    } catch (err) {
-      setResult(`Error: ${err?.message || String(err)}`);
-    }
+  // If no tenants yet → show Onboarding
+  if ((tenants?.length || 0) === 0) {
+    return (
+      <div style={{ maxWidth: 980, margin: "24px auto", fontFamily: "system-ui, sans-serif" }}>
+        {session ? (
+          <p style={{ opacity: 0.7 }}>Signed in as <code>{session.user?.email}</code></p>
+        ) : (
+          <p style={{ color: "#b00" }}>Not signed in.</p>
+        )}
+        <Onboard
+          onDone={(t) => {
+            // adopt the returned tenant immediately
+            const next = [t];
+            setTenants(next);
+            setTenant(t);
+            saveActiveTenant(t);
+            setShowSettings(true); // jump to settings after creation
+          }}
+        />
+      </div>
+    );
   }
 
   return (
-    <div style={{maxWidth: 900, margin: "40px auto", fontFamily: "system-ui, sans-serif"}}>
+    <div style={{ maxWidth: 980, margin: "24px auto", fontFamily: "system-ui, sans-serif" }}>
       <h1>Back Office</h1>
-
-      {/* Tenant selector (from DB) */}
-      <label>
-        Tenant:&nbsp;
-        <select value={tenant} onChange={e => setTenant(e.target.value)}>
-          {tenants.map(t => <option key={t.id} value={t.slug}>{t.business_name || t.slug}</option>)}
-        </select>
-      </label>
-
-      {/* Client selector */}
-      <div style={{ marginTop: 12 }}>
-        <label>
-          Client:&nbsp;
-          <select
-            value={clientUuid}
-            onChange={(e) => setClientUuid(e.target.value)}
-            disabled={!tenant || clientsLoading || clients.length === 0}
-          >
-            <option value="">{clientsLoading ? "Loading…" : clients.length ? "— select —" : "No clients found"}</option>
-            {clients.map(c =>
-              <option key={c.id} value={c.id}>
-                {c.name} {c.email ? `(${c.email})` : ""} {c.phone ? `— ${c.phone}` : ""}
-              </option>
-            )}
-          </select>
-        </label>
-        <button style={{ marginLeft: 8 }} onClick={refreshClients}>Refresh</button>
-      </div>
-
-      {lastInvoice.number && (
-        <div style={{ marginTop: 8, fontSize: 14, opacity: 0.8 }}>
-          Last invoice: <strong>{lastInvoice.number}</strong>
-        </div>
+      {session ? (
+        <p style={{ opacity: 0.7 }}>
+          Signed in as <code>{session.user?.email}</code>
+        </p>
+      ) : (
+        <p style={{ color: "#b00" }}>Not signed in.</p>
       )}
 
-      {/* Create Client form */}
-      <fieldset style={{ marginTop: 16, padding: 12, border: "1px solid #eaecef", borderRadius: 6 }}>
+      {/* Tenant selector + Settings */}
+      <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "12px 0" }}>
+        <label>Active Tenant:&nbsp;</label>
+        <select value={tenant?.id || ""} onChange={onTenantChange}>
+          <option value="">— select —</option>
+          {tenants.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.business_name}
+            </option>
+          ))}
+        </select>
+        <button onClick={() => setShowSettings((v) => !v)}>
+          {showSettings ? "Hide Settings" : "Tenant Settings"}
+        </button>
+        {lastInvoice?.number && (
+          <span style={{ marginLeft: 12, opacity: 0.7 }}>
+            Last invoice: <b>{lastInvoice.number}</b>
+          </span>
+        )}
+      </div>
+
+      {/* Settings panel */}
+      {showSettings && tenant?.id && (
+        <TenantProfile
+          tenantId={tenant.id}
+          onUpdated={(updated) => {
+            // refresh local tenant state after save
+            const nextTenants = tenants.map((t) => (t.id === updated.id ? { ...t, ...updated } : t));
+            setTenants(nextTenants);
+            const nextActive = nextTenants.find((t) => t.id === tenant.id) || tenant;
+            setTenant(nextActive);
+            saveActiveTenant(nextActive);
+          }}
+        />
+      )}
+
+      {/* Client picker + refresh */}
+      <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0" }}>
+        <label>Client:&nbsp;</label>
+        <select value={clientId} onChange={(e) => setClientId(e.target.value)} style={{ minWidth: 260 }}>
+          <option value="">— select —</option>
+          {clients.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name} {c.email ? `(${c.email})` : ""}
+            </option>
+          ))}
+        </select>
+        <button onClick={refreshClients}>Refresh Clients</button>
+      </div>
+
+      {/* Add client form */}
+      <fieldset style={{ padding: 12, border: "1px solid #ddd", borderRadius: 6, margin: "12px 0" }}>
         <legend>Add Client</legend>
-        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8}}>
-          <input placeholder="Name *" value={newClient.name} onChange={updateClient("name")} />
-          <input placeholder="Email"   value={newClient.email} onChange={updateClient("email")} />
-          <input placeholder="Phone (e.g. 254700000000)" value={newClient.phone} onChange={updateClient("phone")} />
-          <input placeholder="External ID (optional)" value={newClient.external_id} onChange={updateClient("external_id")} />
-          <input placeholder="Billing address" value={newClient.billing_address} onChange={updateClient("billing_address")} />
-          <input placeholder="Notes" value={newClient.notes} onChange={updateClient("notes")} />
-        </div>
-        <button style={{ marginTop: 10 }} onClick={createClient}>Create Client</button>
+        <form onSubmit={addClient} style={{ display: "grid", gridTemplateColumns: "2fr 2fr", gap: 8 }}>
+          <input name="name" placeholder="Name *" required />
+          <input name="email" placeholder="Email" />
+          <input name="phone" placeholder="Phone" />
+          <input name="address" placeholder="Billing address" />
+          <input name="notes" placeholder="Notes" />
+          <div style={{ gridColumn: "1 / -1" }}>
+            <button type="submit">Create Client</button>
+          </div>
+        </form>
       </fieldset>
 
-      {/* Invoice fields */}
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:16}}>
-        <input placeholder="issue_date YYYY-MM-DD" value={form.issue_date} onChange={update("issue_date")} />
-        <input placeholder="due_date YYYY-MM-DD"   value={form.due_date}   onChange={update("due_date")} />
-        <input placeholder="currency"  value={form.currency}  onChange={update("currency")} />
-        <input placeholder="subtotal"  value={form.subtotal} onChange={update("subtotal")} />
-        <input placeholder="tax_total" value={form.tax_total} onChange={update("tax_total")} />
-        <input placeholder="total"     value={form.total}     onChange={update("total")} />
-        <input placeholder="notes"     value={form.notes}     onChange={update("notes")} />
+      {/* Invoice form */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        <input value={inv.issue_date} onChange={setInvField("issue_date")} placeholder="issue_date YYYY-MM-DD" />
+        <input value={inv.due_date} onChange={setInvField("due_date")} placeholder="due_date YYYY-MM-DD" />
+        <input value={inv.currency} onChange={setInvField("currency")} placeholder="currency" />
+        <input value={inv.subtotal} onChange={setInvField("subtotal")} placeholder="subtotal" />
+        <input value={inv.tax_total} onChange={setInvField("tax_total")} placeholder="tax_total" />
+        <input value={inv.total} onChange={setInvField("total")} placeholder="total" />
+        <input
+          value={inv.notes}
+          onChange={setInvField("notes")}
+          placeholder="notes"
+          style={{ gridColumn: "1 / -1" }}
+        />
       </div>
 
-      {/* Actions */}
-      <div style={{display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap"}}>
-        <button onClick={ping}>Ping</button>
-        <button onClick={createInvoice} disabled={!clientUuid}>Create Invoice (Supabase)</button>
-        <button onClick={sendPdf} disabled={!lastInvoice.id && !lastInvoice.number}>Generate PDF / Link</button>
-        <button onClick={shareWhatsApp} disabled={!lastInvoice.id && !lastInvoice.number}>Share via WhatsApp</button>
-        <button onClick={emailInvoice} disabled={!lastInvoice.id && !lastInvoice.number}>Email Invoice</button>
+      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+        <button onClick={createInvoice}>Create Invoice (Supabase)</button>
+        <button onClick={sendPdf}>Send Invoice (PDF)</button>
+        {waLink && (
+          <a href={waLink} target="_blank" rel="noreferrer">
+            <button type="button">Share on WhatsApp</button>
+          </a>
+        )}
       </div>
 
-      {/* Quick link to latest generated PDF */}
-      {lastPdfUrl && (
-        <div style={{marginTop:12}}>
-          <a href={lastPdfUrl} target="_blank" rel="noopener noreferrer">Open latest PDF</a>
-        </div>
-      )}
-
-      <pre style={{background:"#f6f8fa", padding:16, marginTop:16, border:"1px solid #eaecef", borderRadius:6, whiteSpace:"pre-wrap"}}>
+      <pre
+        style={{
+          background: "#f6f8fa",
+          padding: 12,
+          marginTop: 12,
+          border: "1px solid #eaecef",
+          borderRadius: 6,
+          whiteSpace: "pre-wrap",
+        }}
+      >
         {String(result)}
       </pre>
     </div>

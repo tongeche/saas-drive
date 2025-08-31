@@ -3,28 +3,6 @@ import { getGoogleClients, getGoogleClientsWithUser } from "./_google.js";
 import { getTenantBySlug } from "./_tenant.js";
 import { decrypt } from "./_crypto.js";
 
-/**
- * POST JSON body:
- * {
- *   "tenant": "acme-co",
- *   "invoice": {
- *      "number": "INV-000123",
- *      "issue_date": "2025-09-01",
- *      "due_date": "2025-09-15",
- *      "currency": "EUR",
- *      "subtotal": 100,
- *      "tax_total": 23,
- *      "total": 123,
- *      "notes": "Thank you."
- *   },
- *   "business": { "name": "Acme Co Ltd" },
- *   "client":   { "name": "Rosa Maria", "address": "Rua Exemplo 123, Lisboa" },
- *   "lines": [
- *     { "description": "Service A", "qty": 1, "unit_price": 100, "line_total": 100 },
- *     { "description": "VAT 23%",   "qty": 1, "unit_price": 23,  "line_total": 23  }
- *   ]
- * }
- */
 export async function handler(event) {
   try {
     if (event.httpMethod !== "POST") {

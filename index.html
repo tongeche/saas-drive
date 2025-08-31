@@ -3,9 +3,35 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Back Office (Drive SaaS)</title>
+    <title>Finovo</title>
+
+    <!-- Tailwind CDN + Finovo theme -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              finovo: {
+                DEFAULT: '#3c6b5b',
+                dark: '#335a4d',
+                light: '#d9f0e1',
+              }
+            },
+            fontFamily: {
+              inter: ['Inter', 'ui-sans-serif', 'system-ui'],
+            }
+          }
+        }
+      }
+    </script>
+    <!-- Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-Sl4YF7QnQdTzM8xZ9J7Y6GQ7pYl/0w1o1qzTj3uKQ2eYl0y4uQFQb0i+8e4j0tV8Qq8Lz+qJbQG2w3m2QH3z3Q==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   </head>
-  <body>
+  <body class="font-inter bg-gray-50 text-gray-800">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
