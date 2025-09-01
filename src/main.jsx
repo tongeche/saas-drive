@@ -14,7 +14,10 @@ import AppShell from "./app/AppShell.jsx";
 import Dashboard from "./app/Dashboard.jsx";
 import InvoiceNew from "./app/InvoiceNew.jsx";
 import ClientNew from "./app/ClientNew.jsx";
+import InvoiceWizard from "./app/InvoiceWizard";
 import InvoicePay from "./app/InvoicePay";
+
+
 
 
 
@@ -24,10 +27,13 @@ createRoot(document.getElementById("root")).render(
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/after-login" element={<AfterLogin />} />
+        <Route path="/app/invoices/new" element={<InvoiceWizard />} />
+
 
         <Route path="/app" element={<AppShell />}>
           <Route index element={<Dashboard />} />
           <Route path="invoices/new" element={<InvoiceNew />} />
+          <Route path="invoices/wizard" element={<InvoiceWizard />} />
           <Route path="invoices/:id/pay" element={<InvoicePay />} />
           <Route path="invoices/:id/pay" element={<InvoicePay />} />
           <Route path="clients/new" element={<ClientNew />} />

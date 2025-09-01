@@ -12,7 +12,7 @@ export default function AfterLogin() {
       // wait for session to hydrate
       let { data: { session } = {} } = await supabase.auth.getSession();
       if (!session) {
-        await new Promise((r) => setTimeout(r, 60));
+        await new Promise((r) => setTimeout(r, 40));
         ({ data: { session } = {} } = await supabase.auth.getSession());
       }
       if (!session) { nav("/login", { replace: true }); return; }
@@ -21,7 +21,7 @@ export default function AfterLogin() {
       try { tenants = await loadMyTenants(); } catch { tenants = []; }
 
       // enforce a 60s minimum delay so users see the slides
-      const minDelayMs = 60000;
+      const minDelayMs = 40000;
       setTimeout(() => {
         nav((tenants && tenants.length > 0) ? "/app" : "/onboard", { replace: true });
       }, minDelayMs);
@@ -77,7 +77,7 @@ export default function AfterLogin() {
   // Carousel animation state
   const [idx, setIdx] = useState(0);
   const [phase, setPhase] = useState("in"); // in -> hold -> out
-  const holdMs = 4000; // each slide visible for 4s
+  const holdMs = 2000; // each slide visible for 2s
   const timerRef = useRef(null);
 
   useEffect(() => {

@@ -170,7 +170,7 @@ export default function Dashboard() {
               >
                 {seeding ? "Seeding…" : "Seed demo"}
               </button>
-              <Link to="/app/invoices/new" className="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5">
+              <Link to="/app/invoices/wizard" className="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5">
                 New Invoice
               </Link>
             </div>
@@ -231,7 +231,7 @@ export default function Dashboard() {
           <button className="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
             Create Quote
           </button>
-          <Link to="/app/invoices/new" className="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
+          <Link to="/app/invoices/wizard" className="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
             Create Invoice
           </Link>
           <Link to="/app/clients/new" className="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
