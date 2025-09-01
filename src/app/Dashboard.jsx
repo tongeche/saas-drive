@@ -30,7 +30,6 @@ export default function Dashboard() {
 
       let out = (invs || []).filter(r => r.tenant_id === tenantId);
 
-      // map client names
       const ids = Array.from(new Set(out.map(i => i.client_id).filter(Boolean)));
       if (ids.length) {
         const { data: clients, error: cErr } = await supabase
@@ -52,7 +51,6 @@ export default function Dashboard() {
     }
   }
 
-  // Seed demo data for tenant with slug "router-limited"
   async function seedRouterLimited() {
     if (!Array.isArray(tenants) || tenants.length === 0) {
       setMsg("No tenants found on this account.");
@@ -69,7 +67,6 @@ export default function Dashboard() {
       }
       if (!tenant || tenant.id !== target.id) setTenant?.(target);
 
-      // ensure 3 clients minimum
       let clients = await listClients(target.id);
       const seedClients = [
         { name: "Acme Inc.", email: "billing@acme.test", phone: "912 345 678" },
@@ -81,7 +78,6 @@ export default function Dashboard() {
         clients.push(c);
       }
 
-      // create 8 invoices
       const todayISO = new Date().toISOString().slice(0, 10);
       const cur = (target.currency || "EUR").toUpperCase();
       const toISO = d => new Date(d).toISOString().slice(0, 10);
@@ -134,7 +130,7 @@ export default function Dashboard() {
 
       {/* Quotes + Invoices */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pb-8">
-        {/* Quotes (placeholder) */}
+        {/* Quotes placeholder */}
         <section className="lg:col-span-1 rounded-2xl bg-white shadow-sm ring-1 ring-black/5 overflow-hidden">
           <Header title="Recent Quotes">
             <button className="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5">
@@ -158,7 +154,7 @@ export default function Dashboard() {
           </ul>
         </section>
 
-        {/* Invoices (real data) */}
+        {/* Invoices */}
         <section className="lg:col-span-2 rounded-2xl bg-white shadow-sm ring-1 ring-black/5 overflow-hidden">
           <Header title="Invoices">
             <div className="flex items-center gap-2">
@@ -197,6 +193,7 @@ export default function Dashboard() {
                     <th className="text-left px-4 py-2">Due</th>
                     <th className="text-left px-4 py-2">Status</th>
                     <th className="text-right px-4 py-2">Amount</th>
+                    <th className="text-right px-4 py-2">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-black/5">
@@ -213,6 +210,11 @@ export default function Dashboard() {
                           <span className={`inline-flex items-center ${badge.cls} px-2 py-0.5 rounded-full text-xs`}>{badge.text}</span>
                         </td>
                         <td className="px-4 py-2 text-right font-semibold">{formatMoney(r.total, r.currency || tenant?.currency)}</td>
+                        <td className="px-4 py-2 text-right">
+                          <Link to={`/app/invoices/${r.id}/pay`} className="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5">
+                            Mark Paid
+                          </Link>
+                        </td>
                       </tr>
                     );
                   })}
@@ -244,7 +246,6 @@ export default function Dashboard() {
   );
 }
 
-/* ------------------------- UI bits ------------------------- */
 function Header({ title, children }) {
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b border-black/5 bg-white/60 backdrop-blur">
@@ -253,7 +254,6 @@ function Header({ title, children }) {
     </div>
   );
 }
-
 function Card({ title, subtitle, accent, children }) {
   return (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-4">
@@ -263,29 +263,17 @@ function Card({ title, subtitle, accent, children }) {
     </div>
   );
 }
-
-/* ----------------------- helpers ----------------------- */
-function formatDate(d) {
-  if (!d) return "—";
-  try { return new Date(d).toLocaleDateString(); } catch { return String(d); }
-}
+function formatDate(d) { if (!d) return "—"; try { return new Date(d).toLocaleDateString(); } catch { return String(d); } }
 function sum(arr) { return arr.reduce((a, b) => a + (Number(b) || 0), 0); }
 function formatMoney(amount, currency = "EUR") {
-  try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(Number(amount || 0));
-  } catch {
-    return `${currency} ${Number(amount || 0).toFixed(2)}`;
-  }
+  try { return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(Number(amount || 0)); }
+  catch { return `${currency} ${Number(amount || 0).toFixed(2)}`; }
 }
-function inThisMonth(iso) {
-  if (!iso) return false;
-  const d = new Date(iso); const now = new Date();
-  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-}
+function inThisMonth(iso) { if (!iso) return false; const d = new Date(iso); const now = new Date(); return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth(); }
 function statusOf(inv) {
   const due = inv?.due_date ? new Date(inv.due_date) : null;
   if (!due) return "Issued";
-  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const today = new Date(); today.setHours(0,0,0,0);
   const diff = (due - today) / 86400000;
   if (diff < 0) return "Overdue";
   if (diff <= 7) return "Due Soon";

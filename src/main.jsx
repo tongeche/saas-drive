@@ -14,6 +14,9 @@ import AppShell from "./app/AppShell.jsx";
 import Dashboard from "./app/Dashboard.jsx";
 import InvoiceNew from "./app/InvoiceNew.jsx";
 import ClientNew from "./app/ClientNew.jsx";
+import InvoicePay from "./app/InvoicePay";
+
+
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -25,6 +28,8 @@ createRoot(document.getElementById("root")).render(
         <Route path="/app" element={<AppShell />}>
           <Route index element={<Dashboard />} />
           <Route path="invoices/new" element={<InvoiceNew />} />
+          <Route path="invoices/:id/pay" element={<InvoicePay />} />
+          <Route path="invoices/:id/pay" element={<InvoicePay />} />
           <Route path="clients/new" element={<ClientNew />} />
           <Route path="lab" element={<App />} />
         </Route>
