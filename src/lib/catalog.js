@@ -39,3 +39,17 @@ export async function searchCatalogForActiveTenant(term, limit = 20) {
   if (error) throw error;
   return data || [];
 }
+
+/**
+ * Format money with currency symbol
+ */
+export function formatMoney(amount, currency = "EUR") {
+  try { 
+    return new Intl.NumberFormat(undefined, { 
+      style: "currency", 
+      currency 
+    }).format(Number(amount || 0)); 
+  } catch { 
+    return `${currency} ${Number(amount || 0).toFixed(2)}`; 
+  }
+}

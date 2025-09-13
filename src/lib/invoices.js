@@ -66,3 +66,29 @@ export async function sendInvoicePdfById(tenant_slug, invoice_id, opts = {}) {
   if (!res.ok) throw new Error(json?.error || `PDF error (HTTP ${res.status})`);
   return json;
 }
+
+/**
+ * Determine invoice status based on due date and payments
+ */
+export function statusOf(inv) {
+  const due = inv?.due_date ? new Date(inv.due_date) : null;
+  if (!due) return "Issued";
+  const today = new Date(); 
+  today.setHours(0,0,0,0);
+  const diff = (due - today) / 86400000;
+  if (diff < 0) return "Overdue";
+  if (diff <= 7) return "Due Soon";
+  return "Issued";
+}
+
+/**
+ * Get status badge configuration for invoice status
+ */
+export function statusBadge(status) {
+  switch (status) {
+    case "Overdue": return { text: "Overdue", cls: "text-rose-700 bg-rose-50" };
+    case "Due Soon": return { text: "Due Soon", cls: "text-amber-700 bg-amber-50" };
+    case "Paid": return { text: "Paid", cls: "text-emerald-700 bg-emerald-50" };
+    default: return { text: "Issued", cls: "text-sky-700 bg-sky-50" };
+  }
+}

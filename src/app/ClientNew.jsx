@@ -43,9 +43,9 @@ export default function ClientNew() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <h1 className="text-xl font-semibold">Add Client</h1>
-        <Link to="/app" className="rounded-lg px-3 py-2 text-sm ring-1 ring-black/10 bg-white hover:bg-black/5">
+        <Link to="/app" className="rounded-lg px-3 py-2 text-sm ring-1 ring-black/10 bg-white hover:bg-black/5 w-full sm:w-auto text-center">
           Cancel
         </Link>
       </div>
@@ -58,13 +58,13 @@ export default function ClientNew() {
 
       <form onSubmit={onSubmit} className="space-y-6">
         <section className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-4">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="sm:col-span-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="lg:col-span-2">
               <label className="block text-sm text-black/70 mb-1">Client name</label>
               <input
                 value={form.name}
                 onChange={(e)=>setField("name", e.target.value)}
-                className="w-full rounded-lg border border-black/10 px-3 py-2"
+                className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm sm:text-base"
                 placeholder="Acme Inc."
                 required
               />
@@ -75,7 +75,7 @@ export default function ClientNew() {
                 type="email"
                 value={form.email}
                 onChange={(e)=>setField("email", e.target.value)}
-                className="w-full rounded-lg border border-black/10 px-3 py-2"
+                className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm sm:text-base"
                 placeholder="billing@acme.test"
               />
             </div>
@@ -84,15 +84,15 @@ export default function ClientNew() {
               <input
                 value={form.phone}
                 onChange={(e)=>setField("phone", e.target.value)}
-                className="w-full rounded-lg border border-black/10 px-3 py-2"
+                className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm sm:text-base"
                 placeholder="+351 912 345 678"
               />
             </div>
           </div>
         </section>
 
-        <div className="flex items-center justify-end gap-3">
-          <Link to="/app" className="rounded-lg px-3 py-2 text-sm ring-1 ring-black/10 bg-white hover:bg-black/5">Cancel</Link>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+          <Link to="/app" className="rounded-lg px-3 py-2 text-sm ring-1 ring-black/10 bg-white hover:bg-black/5 text-center">Cancel</Link>
           <button
             type="submit"
             disabled={saving}

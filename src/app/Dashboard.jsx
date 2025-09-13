@@ -1,24 +1,61 @@
 import React, { useEffect, useState } from "react";
 import { useOutletContext, Link } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { 
+  faFileInvoice, 
+  faFileContract, 
+  faBoxes, 
+  faBuilding, 
+  faMoneyBillWave,
+  faArrowUp,
+  faArrowDown,
+  faEye,
+  faPlus
+} from "@fortawesome/free-solid-svg-icons";
 import supabase from "../lib/supabase";
 import { listClients, createClient } from "../lib/clients";
-import { createInvoice as apiCreateInvoice } from "../lib/invoices";
+import { createInvoice as apiCreateInvoice, statusOf, statusBadge } from "../lib/invoices";
+import { listQuotes } from "../lib/quotes";
+import { listItems } from "../lib/items";
+import { getCashflowTransactions, getCashflowBalance } from "../lib/cashflow";
+import { formatMoney } from "../lib/catalog";
 
 export default function Dashboard() {
   const { tenant, tenants, setTenant } = useOutletContext() || {};
   const [invoices, setInvoices] = useState([]);
+  const [quotes, setQuotes] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [items, setItems] = useState([]);
+  const [cashflowTransactions, setCashflowTransactions] = useState([]);
+  const [cashflowBalance, setCashflowBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
     if (!tenant?.id) return;
-    loadInvoices(tenant.id).catch(() => {});
+    loadAllData(tenant.id);
   }, [tenant?.id]);
 
-  async function loadInvoices(tenantId) {
+  async function loadAllData(tenantId) {
     setLoading(true);
     setMsg("");
+    try {
+      await Promise.all([
+        loadInvoices(tenantId),
+        loadQuotes(tenantId),
+        loadClients(tenantId),
+        loadItems(tenantId),
+        loadCashflow(tenantId)
+      ]);
+    } catch (e) {
+      setMsg(e.message || "Failed to load data.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadInvoices(tenantId) {
     try {
       const { data: invs, error } = await supabase
         .from("invoices")
@@ -45,9 +82,69 @@ export default function Dashboard() {
 
       setInvoices(out);
     } catch (e) {
-      setMsg(e.message || "Failed to load invoices.");
-    } finally {
-      setLoading(false);
+      console.error("Failed to load invoices:", e);
+    }
+  }
+
+  async function loadQuotes(tenantId) {
+    try {
+      const quoteRows = await listQuotes(tenantId);
+      let out = (quoteRows || []).filter(r => r.tenant_id === tenantId);
+
+      const ids = Array.from(new Set(out.map(q => q.client_id).filter(Boolean)));
+      if (ids.length) {
+        const { data: clients, error: cErr } = await supabase
+          .from("clients")
+          .select("id, name")
+          .in("id", ids);
+        if (cErr) throw cErr;
+        const nameMap = new Map((clients || []).map(c => [c.id, c.name]));
+        out = out.map(q => ({ ...q, clientName: nameMap.get(q.client_id) || "—" }));
+      } else {
+        out = out.map(q => ({ ...q, clientName: "—" }));
+      }
+
+      setQuotes(out);
+    } catch (e) {
+      console.error("Failed to load quotes:", e);
+    }
+  }
+
+  async function loadClients(tenantId) {
+    try {
+      const clientRows = await listClients(tenantId);
+      setClients(clientRows || []);
+    } catch (e) {
+      console.error("Failed to load clients:", e);
+    }
+  }
+
+  async function loadItems(tenantId) {
+    try {
+      const { data: itemRows, error } = await supabase
+        .from("items")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      setItems(itemRows || []);
+    } catch (e) {
+      console.error("Failed to load items:", e);
+    }
+  }
+
+  async function loadCashflow(tenantId) {
+    try {
+      const [transactions, balance] = await Promise.all([
+        getCashflowTransactions(tenantId, {}),
+        getCashflowBalance(tenantId, tenant?.currency || 'EUR')
+      ]);
+      setCashflowTransactions(transactions || []);
+      setCashflowBalance(balance || 0);
+    } catch (e) {
+      console.error("Failed to load cashflow:", e);
     }
   }
 
@@ -110,68 +207,55 @@ export default function Dashboard() {
     }
   }
 
+  const getQuoteStatusBadge = (status) => {
+    switch (status) {
+      case 'Draft':
+        return { cls: 'bg-gray-100 text-gray-800', text: 'Draft' };
+      case 'Sent':
+        return { cls: 'bg-blue-100 text-blue-800', text: 'Sent' };
+      case 'Accepted':
+        return { cls: 'bg-green-100 text-green-800', text: 'Accepted' };
+      case 'Rejected':
+        return { cls: 'bg-red-100 text-red-800', text: 'Rejected' };
+      default:
+        return { cls: 'bg-gray-100 text-gray-800', text: status || 'Unknown' };
+    }
+  };
+
   return (
-    <div className="mx-auto max-w-7xl px-4">
-      {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-5">
-        <Card title="Total Sales" subtitle="+12% MoM" accent="text-green-600">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      {/* Enhanced KPI cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pb-6">
+        <Card title="Total Sales" subtitle="+12% MoM" accent="text-green-600" icon={faFileInvoice}>
           {formatMoney(sum(invoices.map(i => i.total)), tenant?.currency)}
         </Card>
-        <Card title="Pending Invoices" subtitle="Not paid yet" accent="text-amber-600">
-          {invoices.filter(i => statusOf(i) !== "Paid").length}
+        <Card title="Cashflow Balance" subtitle={`${cashflowTransactions.length} transactions`} accent={cashflowBalance >= 0 ? "text-green-600" : "text-red-600"} icon={faMoneyBillWave}>
+          {formatMoney(cashflowBalance, tenant?.currency)}
         </Card>
-        <Card title="Issued this month" subtitle="Counts">
-          {invoices.filter(i => inThisMonth(i.issue_date)).length}
+        <Card title="Active Quotes" subtitle={`${quotes.filter(q => ['Draft', 'Sent'].includes(q.status)).length} pending`} accent="text-blue-600" icon={faFileContract}>
+          {quotes.length}
         </Card>
-        <Card title="Clients Billed" subtitle="Unique this month">
-          {new Set(invoices.filter(i => inThisMonth(i.issue_date)).map(i => i.client_id)).size}
+        <Card title="Inventory Items" subtitle={`${items.filter(i => i.is_service).length} services`} accent="text-purple-600" icon={faBoxes}>
+          {items.length}
+        </Card>
+        <Card title="Active Clients" subtitle="Total registered" accent="text-indigo-600" icon={faBuilding}>
+          {clients.length}
         </Card>
       </div>
 
-      {/* Quotes + Invoices */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pb-8">
-        {/* Quotes placeholder */}
-        <section className="lg:col-span-1 rounded-2xl bg-white shadow-sm ring-1 ring-black/5 overflow-hidden">
-          <Header title="Recent Quotes">
-            <button className="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5">
-              New Quote
-            </button>
-          </Header>
-          <ul className="divide-y divide-black/5 text-sm">
-            {[
-              { id: "Q-2045", who: "Tech Solutions", what: "Website revamp", status: "Accepted", cls: "text-emerald-700 bg-emerald-50" },
-              { id: "Q-2046", who: "Acme Inc.", what: "Annual support", status: "Pending", cls: "text-amber-700 bg-amber-50" },
-              { id: "Q-2047", who: "Globex Corp.", what: "On-site training", status: "Declined", cls: "text-rose-700 bg-rose-50" }
-            ].map(q => (
-              <li key={q.id} className="flex items-center justify-between px-4 py-3">
-                <div>
-                  <div className="font-medium">{q.id} · {q.who}</div>
-                  <div className="text-black/60">{q.what}</div>
-                </div>
-                <span className={`inline-flex items-center ${q.cls} px-2 py-0.5 rounded-full text-xs`}>{q.status}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* Invoices */}
-        <section className="lg:col-span-2 rounded-2xl bg-white shadow-sm ring-1 ring-black/5 overflow-hidden">
-          <Header title="Invoices">
+      {/* Main content grid - responsive layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-8">
+        {/* Recent Invoices - takes full width on mobile, 8 cols on desktop */}
+        <section className="lg:col-span-8 rounded-2xl bg-white shadow-sm ring-1 ring-black/5 overflow-hidden">
+          <Header title="Recent Invoices" count={invoices.length}>
             <div className="flex items-center gap-2">
-              <div className="hidden md:flex items-center gap-2 rounded-lg px-2 py-1 ring-1 ring-black/10">
-                <svg className="h-4 w-4 opacity-60" viewBox="0 0 24 24" fill="currentColor"><path d="M21 21l-4.35-4.35M10 18a8 8 0 110-16 8 8 0 010 16z"/></svg>
-                <input className="bg-transparent outline-none text-sm" placeholder="Search invoices…" />
-              </div>
-              <button
-                onClick={seedRouterLimited}
-                disabled={seeding}
-                className="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5 disabled:opacity-50"
-                title='Seed invoices for tenant slug "router-limited"'
-              >
-                {seeding ? "Seeding…" : "Seed demo"}
-              </button>
-              <Link to="/app/invoices/wizard" className="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5">
-                New Invoice
+              <Link to="/app/invoices" className="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5 flex items-center gap-1">
+                <FontAwesomeIcon icon={faEye} className="w-3 h-3" />
+                <span className="hidden sm:inline">View All</span>
+              </Link>
+              <Link to="/app/invoices/wizard" className="text-xs rounded-lg px-2 py-1 bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-1">
+                <FontAwesomeIcon icon={faPlus} className="w-3 h-3" />
+                <span className="hidden sm:inline">New Invoice</span>
               </Link>
             </div>
           </Header>
@@ -180,12 +264,16 @@ export default function Dashboard() {
 
           <div className="overflow-x-auto">
             {loading ? (
-              <div className="px-4 py-8 text-sm text-black/60">Loading…</div>
+              <div className="px-4 py-8 text-sm text-black/60 text-center">Loading…</div>
             ) : invoices.length === 0 ? (
-              <div className="px-4 py-8 text-sm text-black/60">No invoices yet.</div>
+              <div className="px-4 py-8 text-sm text-black/60 text-center">
+                <FontAwesomeIcon icon={faFileInvoice} className="w-12 h-12 text-gray-300 mb-3" />
+                <p>No invoices yet.</p>
+                <Link to="/app/invoices/wizard" className="text-emerald-600 hover:text-emerald-700">Create your first invoice</Link>
+              </div>
             ) : (
               <table className="min-w-full text-sm">
-                <thead className="bg-[#F3F4F6] text-black/60">
+                <thead className="bg-[#F3F4F6] text-black/60 hidden sm:table-header-group">
                   <tr>
                     <th className="text-left px-4 py-2">Invoice #</th>
                     <th className="text-left px-4 py-2">Client</th>
@@ -193,27 +281,37 @@ export default function Dashboard() {
                     <th className="text-left px-4 py-2">Due</th>
                     <th className="text-left px-4 py-2">Status</th>
                     <th className="text-right px-4 py-2">Amount</th>
-                    <th className="text-right px-4 py-2">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-black/5">
-                  {invoices.map((r) => {
+                  {invoices.slice(0, 10).map((r) => {
                     const status = statusOf(r);
                     const badge = statusBadge(status);
                     return (
-                      <tr key={r.id}>
-                        <td className="px-4 py-2 font-medium">{r.number || r.id}</td>
-                        <td className="px-4 py-2">{r.clientName}</td>
-                        <td className="px-4 py-2">{formatDate(r.issue_date)}</td>
-                        <td className="px-4 py-2">{formatDate(r.due_date)}</td>
-                        <td className="px-4 py-2">
+                      <tr key={r.id} className="sm:table-row flex flex-col sm:flex-row border-b sm:border-b-0 pb-4 sm:pb-0 mb-4 sm:mb-0">
+                        <td className="px-4 py-2 font-medium flex justify-between sm:table-cell">
+                          <span className="sm:hidden text-gray-500">Invoice:</span>
+                          {r.number || r.id}
+                        </td>
+                        <td className="px-4 py-2 flex justify-between sm:table-cell">
+                          <span className="sm:hidden text-gray-500">Client:</span>
+                          {r.clientName}
+                        </td>
+                        <td className="px-4 py-2 flex justify-between sm:table-cell">
+                          <span className="sm:hidden text-gray-500">Issued:</span>
+                          {formatDate(r.issue_date)}
+                        </td>
+                        <td className="px-4 py-2 flex justify-between sm:table-cell">
+                          <span className="sm:hidden text-gray-500">Due:</span>
+                          {formatDate(r.due_date)}
+                        </td>
+                        <td className="px-4 py-2 flex justify-between sm:table-cell">
+                          <span className="sm:hidden text-gray-500">Status:</span>
                           <span className={`inline-flex items-center ${badge.cls} px-2 py-0.5 rounded-full text-xs`}>{badge.text}</span>
                         </td>
-                        <td className="px-4 py-2 text-right font-semibold">{formatMoney(r.total, r.currency || tenant?.currency)}</td>
-                        <td className="px-4 py-2 text-right">
-                          <Link to={`/app/invoices/${r.id}/pay`} className="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5">
-                            Mark Paid
-                          </Link>
+                        <td className="px-4 py-2 text-right font-semibold flex justify-between sm:table-cell">
+                          <span className="sm:hidden text-gray-500">Amount:</span>
+                          {formatMoney(r.total, r.currency || tenant?.currency)}
                         </td>
                       </tr>
                     );
@@ -223,23 +321,120 @@ export default function Dashboard() {
             )}
           </div>
         </section>
+
+        {/* Sidebar content - stacks on mobile, 4 cols on desktop */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Recent Quotes */}
+          <section className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 overflow-hidden">
+            <Header title="Recent Quotes" count={quotes.length}>
+              <Link to="/app/quotes/new" className="text-xs rounded-lg px-2 py-1 bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-1">
+                <FontAwesomeIcon icon={faPlus} className="w-3 h-3" />
+                <span className="hidden sm:inline">New</span>
+              </Link>
+            </Header>
+            <ul className="divide-y divide-black/5 text-sm">
+              {quotes.length === 0 ? (
+                <li className="px-4 py-8 text-center text-black/60">
+                  <FontAwesomeIcon icon={faFileContract} className="w-8 h-8 text-gray-300 mb-2" />
+                  <p>No quotes yet.</p>
+                </li>
+              ) : (
+                quotes.slice(0, 5).map(q => {
+                  const statusBadge = getQuoteStatusBadge(q.status);
+                  return (
+                    <li key={q.id} className="px-4 py-3">
+                      <div className="flex items-center justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium truncate">{q.number || q.id}</div>
+                          <div className="text-black/60 text-xs">{q.clientName}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">{formatMoney(q.total, q.currency || tenant?.currency)}</div>
+                          <span className={`inline-flex items-center ${statusBadge.cls} px-1.5 py-0.5 rounded-full text-xs`}>
+                            {statusBadge.text}
+                          </span>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          </section>
+
+          {/* Recent Cashflow */}
+          <section className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 overflow-hidden">
+            <Header title="Recent Transactions" count={cashflowTransactions.length}>
+              <Link to="/app/cashflow/new" className="text-xs rounded-lg px-2 py-1 bg-green-600 text-white hover:bg-green-700 flex items-center gap-1">
+                <FontAwesomeIcon icon={faPlus} className="w-3 h-3" />
+                <span className="hidden sm:inline">Add</span>
+              </Link>
+            </Header>
+            <ul className="divide-y divide-black/5 text-sm">
+              {cashflowTransactions.length === 0 ? (
+                <li className="px-4 py-8 text-center text-black/60">
+                  <FontAwesomeIcon icon={faMoneyBillWave} className="w-8 h-8 text-gray-300 mb-2" />
+                  <p>No transactions yet.</p>
+                </li>
+              ) : (
+                cashflowTransactions.slice(0, 5).map(t => (
+                  <li key={t.id} className="px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <FontAwesomeIcon 
+                            icon={t.transaction_type === 'cash_in' ? faArrowUp : faArrowDown} 
+                            className={`w-3 h-3 ${t.transaction_type === 'cash_in' ? 'text-green-600' : 'text-red-600'}`}
+                          />
+                          <span className="font-medium truncate">{t.description}</span>
+                        </div>
+                        <div className="text-black/60 text-xs">{t.category || 'Uncategorized'}</div>
+                      </div>
+                      <div className={`text-right font-medium ${t.transaction_type === 'cash_in' ? 'text-green-600' : 'text-red-600'}`}>
+                        {t.transaction_type === 'cash_in' ? '+' : '-'}{formatMoney(t.amount, t.currency)}
+                      </div>
+                    </div>
+                  </li>
+                ))
+              )}
+            </ul>
+          </section>
+        </div>
       </div>
 
       {/* Quick actions */}
       <div className="pb-8">
-        <div className="rounded-2xl shadow-sm ring-1 ring-black/5 p-4 flex flex-wrap gap-3" style={{ background: "#E9F5EE" }}>
-          <button className="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
-            Create Quote
-          </button>
-          <Link to="/app/invoices/wizard" className="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
-            Create Invoice
-          </Link>
-          <Link to="/app/clients/new" className="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
-            Add Client
-          </Link>
-          <button className="rounded-xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5">
-            Export CSV
-          </button>
+        <div className="rounded-2xl shadow-sm ring-1 ring-black/5 p-4 sm:p-6" style={{ background: "#E9F5EE" }}>
+          <h3 className="font-semibold mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <Link to="/app/invoices/wizard" className="rounded-xl bg-white px-3 py-3 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5 text-center">
+              <FontAwesomeIcon icon={faFileInvoice} className="w-4 h-4 mb-1 text-emerald-600" />
+              <div>Invoice</div>
+            </Link>
+            <Link to="/app/quotes/new" className="rounded-xl bg-white px-3 py-3 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5 text-center">
+              <FontAwesomeIcon icon={faFileContract} className="w-4 h-4 mb-1 text-blue-600" />
+              <div>Quote</div>
+            </Link>
+            <Link to="/app/cashflow/new" className="rounded-xl bg-white px-3 py-3 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5 text-center">
+              <FontAwesomeIcon icon={faMoneyBillWave} className="w-4 h-4 mb-1 text-green-600" />
+              <div>Transaction</div>
+            </Link>
+            <Link to="/app/clients/new" className="rounded-xl bg-white px-3 py-3 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5 text-center">
+              <FontAwesomeIcon icon={faBuilding} className="w-4 h-4 mb-1 text-indigo-600" />
+              <div>Client</div>
+            </Link>
+            <Link to="/app/items/new" className="rounded-xl bg-white px-3 py-3 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5 text-center">
+              <FontAwesomeIcon icon={faBoxes} className="w-4 h-4 mb-1 text-purple-600" />
+              <div>Item</div>
+            </Link>
+            <button 
+              onClick={seedRouterLimited}
+              disabled={seeding}
+              className="rounded-xl bg-white px-3 py-3 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5 text-center disabled:opacity-50"
+            >
+              <div>{seeding ? "Seeding..." : "Demo Data"}</div>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -254,36 +449,32 @@ function Header({ title, children }) {
     </div>
   );
 }
-function Card({ title, subtitle, accent, children }) {
+function Card({ title, subtitle, accent, icon, children }) {
   return (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 p-4">
-      <div className="text-xs uppercase tracking-wide text-black/50">{title}</div>
-      <div className="mt-2 text-2xl font-bold">{children}</div>
-      {subtitle ? <div className={`text-xs mt-1 ${accent || "text-black/60"}`}>{subtitle}</div> : null}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-xs uppercase tracking-wide text-black/50">{title}</div>
+          <div className="mt-2 text-2xl font-bold">{children}</div>
+          {subtitle ? <div className={`text-xs mt-1 ${accent || "text-black/60"}`}>{subtitle}</div> : null}
+        </div>
+        {icon && (
+          <FontAwesomeIcon icon={icon} className={`w-5 h-5 ${accent || "text-black/60"}`} />
+        )}
+      </div>
     </div>
   );
 }
 function formatDate(d) { if (!d) return "—"; try { return new Date(d).toLocaleDateString(); } catch { return String(d); } }
 function sum(arr) { return arr.reduce((a, b) => a + (Number(b) || 0), 0); }
-function formatMoney(amount, currency = "EUR") {
-  try { return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(Number(amount || 0)); }
-  catch { return `${currency} ${Number(amount || 0).toFixed(2)}`; }
-}
 function inThisMonth(iso) { if (!iso) return false; const d = new Date(iso); const now = new Date(); return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth(); }
-function statusOf(inv) {
-  const due = inv?.due_date ? new Date(inv.due_date) : null;
-  if (!due) return "Issued";
-  const today = new Date(); today.setHours(0,0,0,0);
-  const diff = (due - today) / 86400000;
-  if (diff < 0) return "Overdue";
-  if (diff <= 7) return "Due Soon";
-  return "Issued";
-}
-function statusBadge(status) {
+
+function getQuoteStatusBadge(status) {
   switch (status) {
-    case "Overdue": return { text: "Overdue", cls: "text-rose-700 bg-rose-50" };
-    case "Due Soon": return { text: "Due Soon", cls: "text-amber-700 bg-amber-50" };
-    case "Paid": return { text: "Paid", cls: "text-emerald-700 bg-emerald-50" };
-    default: return { text: "Issued", cls: "text-sky-700 bg-sky-50" };
+    case "Accepted": return { text: "Accepted", cls: "text-emerald-700 bg-emerald-50" };
+    case "Declined": return { text: "Declined", cls: "text-rose-700 bg-rose-50" };
+    case "Sent": return { text: "Sent", cls: "text-blue-700 bg-blue-50" };
+    case "Expired": return { text: "Expired", cls: "text-gray-700 bg-gray-50" };
+    default: return { text: "Draft", cls: "text-amber-700 bg-amber-50" };
   }
 }
