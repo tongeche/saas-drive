@@ -59,6 +59,7 @@ export default function CRM() {
   const [selectedTier, setSelectedTier] = useState('all');
   const [selectedClient, setSelectedClient] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [mainActiveTab, setMainActiveTab] = useState('clients');
   const [showNewActivityModal, setShowNewActivityModal] = useState(false);
   const [error, setError] = useState('');
 
@@ -361,6 +362,35 @@ export default function CRM() {
         </div>
       </div>
 
+      {/* Main Navigation Tabs */}
+      <div className="mb-6">
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8">
+            {[
+              { id: 'clients', label: 'Clients', icon: faUsers },
+              { id: 'activities', label: 'Activities', icon: faHistory },
+              { id: 'analytics', label: 'Analytics', icon: faChartLine }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setMainActiveTab(tab.id)}
+                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
+                  mainActiveTab === tab.id
+                    ? 'border-green-500 text-green-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <FontAwesomeIcon icon={tab.icon} className="w-4 h-4" />
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      {/* Clients Tab */}
+      {mainActiveTab === 'clients' && (
+        <>
       {/* Filters */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -551,6 +581,41 @@ export default function CRM() {
           getActivityIcon={getActivityIcon}
           getSatisfactionColor={getSatisfactionColor}
         />
+      )}
+        </>
+      )}
+
+      {/* Activities Tab */}
+      {mainActiveTab === 'activities' && (
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
+          <div className="space-y-4">
+            {activities.slice(0, 10).map(activity => (
+              <div key={activity.id} className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg">
+                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-sm ${getSatisfactionColor(activity.type)}`}>
+                  <FontAwesomeIcon icon={getActivityIcon(activity.type)} className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900">
+                    {activity.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formatDate(activity.created_at)} at {formatTime(activity.created_at)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Analytics Tab */}
+      {mainActiveTab === 'analytics' && (
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Analytics Dashboard</h3>
+          <p className="text-gray-600">Advanced analytics and reporting features coming soon.</p>
+        </div>
       )}
     </div>
   );
