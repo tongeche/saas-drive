@@ -48,7 +48,10 @@ export async function getCRMClients(tenantId, filters = {}) {
           tags: client.tags || [],
           satisfaction_score: client.satisfaction_score || 7,
           payment_terms: client.payment_terms || 30,
-          preferred_contact: client.preferred_contact || 'email'
+          preferred_contact: client.preferred_contact || 'email',
+          status: client.status || 'active',
+          tier: client.tier || 'standard',
+          company: client.company || client.name
         };
       })
     );
@@ -70,11 +73,18 @@ export async function getClientActivities(clientId, limit = 50) {
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (error) throw error;
+    if (error) {
+      // If table doesn't exist, return empty array
+      if (error.code === 'PGRST116' || error.message.includes('does not exist')) {
+        console.warn('client_activities table does not exist, returning empty array');
+        return [];
+      }
+      throw error;
+    }
     return data || [];
   } catch (error) {
     console.error('Error fetching client activities:', error);
-    throw error;
+    return [];
   }
 }
 
@@ -135,11 +145,18 @@ export async function getClientCommunications(clientId) {
       .eq('client_id', clientId)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      // If table doesn't exist, return empty array
+      if (error.code === 'PGRST116' || error.message.includes('does not exist')) {
+        console.warn('client_communications table does not exist, returning empty array');
+        return [];
+      }
+      throw error;
+    }
     return data || [];
   } catch (error) {
     console.error('Error fetching client communications:', error);
-    throw error;
+    return [];
   }
 }
 
@@ -355,7 +372,7 @@ export async function getCRMAnalytics(tenantId) {
 
     const topClients = Object.entries(clientRevenue)
       .map(([clientId, revenue]) => {
-        const client = clients.find(c => c.id === parseInt(clientId));
+        const client = clients.find(c => c.id === clientId);
         return client ? { ...client, revenue } : null;
       })
       .filter(Boolean)
@@ -409,7 +426,20 @@ function calculateClientGrowth(clients) {
 // Get recent activities across all clients for a tenant
 async function getRecentActivities(tenantId, limit = 10) {
   try {
+    // First, check if the table exists
     const { data, error } = await supabase
+      .from('client_activities')
+      .select('id')
+      .limit(1);
+
+    // If we get a "table does not exist" error, return empty array
+    if (error && (error.code === 'PGRST116' || error.message.includes('does not exist') || error.message.includes('relation') || error.code === '42P01')) {
+      console.warn('client_activities table does not exist yet. Please run database migration.');
+      return [];
+    }
+
+    // If table exists, do the full query
+    const { data: fullData, error: fullError } = await supabase
       .from('client_activities')
       .select(`
         *,
@@ -419,8 +449,12 @@ async function getRecentActivities(tenantId, limit = 10) {
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (error) throw error;
-    return data || [];
+    if (fullError) {
+      console.error('Error fetching recent activities:', fullError);
+      return [];
+    }
+    
+    return fullData || [];
   } catch (error) {
     console.error('Error fetching recent activities:', error);
     return [];
@@ -430,20 +464,60 @@ async function getRecentActivities(tenantId, limit = 10) {
 // Get recent communications across all clients for a tenant
 export async function getRecentCommunications(tenantId, limit = 10) {
   try {
+    console.log(`🔍 Fetching communications for tenant: ${tenantId}`);
+    
+    // First try a simple query to test table access
+    const { data: testData, error: testError } = await supabase
+      .from('client_communications')
+      .select('id, tenant_id')
+      .limit(1);
+
+    if (testError) {
+      console.error('❌ Error accessing client_communications table:', testError);
+      console.error('Error code:', testError.code);
+      console.error('Error details:', testError.details);
+      return [];
+    }
+
+    console.log('✅ client_communications table accessible');
+
+    // Try the full query with fallback for missing 'date' column
     const { data, error } = await supabase
       .from('client_communications')
       .select(`
-        *,
-        client:clients(name, email, company)
+        id,
+        tenant_id,
+        client_id,
+        type,
+        direction,
+        subject,
+        content,
+        created_at,
+        status
       `)
       .eq('tenant_id', tenantId)
-      .order('date', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (error) throw error;
-    return data || [];
+    if (error) {
+      console.error('❌ Error in communications query:', error);
+      console.error('Error code:', error.code);
+      console.error('Error details:', error.details);
+      console.error('Query was for tenant_id:', tenantId);
+      return [];
+    }
+
+    // Add date field as alias for created_at for compatibility
+    const dataWithDate = data?.map(item => ({
+      ...item,
+      date: item.created_at
+    })) || [];
+
+    console.log(`✅ Successfully fetched ${dataWithDate.length} communications`);
+    return dataWithDate;
+    
   } catch (error) {
-    console.error('Error fetching recent communications:', error);
+    console.error('❌ Unexpected error in getRecentCommunications:', error);
     return [];
   }
 }

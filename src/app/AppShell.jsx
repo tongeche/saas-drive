@@ -55,7 +55,7 @@ export default function AppShell() {
     quotes: false,
     inventory: false,
     clients: false,
-    crm: false,
+    crm: true, // CRM expanded by default since it's a key feature
     cashflow: false,
     reports: false
   });
@@ -158,19 +158,77 @@ export default function AppShell() {
             <span>Dashboard</span>
           </NavLink>
 
-          <NavLink
-            to="/app/lab"
-            className={({ isActive }) =>
-              `flex items-center gap-2 px-3 py-2 rounded-xl ${
-                isActive ? "bg-white text-gray-900 shadow-sm" : "text-gray-700 hover:bg-white/70"
-              }`
-            }
-          >
-            <FontAwesomeIcon icon={faFlask} className="w-4 h-4" />
-            <span>Back Office (Lab)</span>
-          </NavLink>
+          {/* CRM Group - Moved to top for better prominence */}
+          <div>
+            <button
+              type="button"
+              onClick={() => toggleGroup('crm')}
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-gray-700 hover:bg-white/70"
+            >
+              <div className="flex items-center gap-2">
+                <FontAwesomeIcon icon={faUsers} className="w-4 h-4" />
+                <span>CRM</span>
+              </div>
+              <FontAwesomeIcon 
+                icon={expandedGroups.crm ? faChevronDown : faChevronRight} 
+                className="w-3 h-3" 
+              />
+            </button>
+            {expandedGroups.crm && (
+              <div className="ml-6 mt-1 space-y-1">
+                <button
+                  type="button"
+                  onClick={() => nav("/app/crm")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faChartLine} className="w-3 h-3" />
+                  <span>CRM Dashboard</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nav("/app/clients")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faUsers} className="w-3 h-3" />
+                  <span>Manage Clients</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nav("/app/crm/communications")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faCommentDots} className="w-3 h-3" />
+                  <span>Communications</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nav("/app/crm/activities")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faHandshake} className="w-3 h-3" />
+                  <span>Activities</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nav("/app/crm/reminders")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faBell} className="w-3 h-3" />
+                  <span>Follow-up Reminders</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nav("/app/clients/new")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faUserPlus} className="w-3 h-3" />
+                  <span>Add New Client</span>
+                </button>
+              </div>
+            )}
+          </div>
 
-          {/* Business Group */}
+          {/* Business Operations */}
           <div>
             <button
               type="button"
@@ -188,6 +246,14 @@ export default function AppShell() {
             </button>
             {expandedGroups.business && (
               <div className="ml-6 mt-1 space-y-1">
+                <button
+                  type="button"
+                  onClick={() => nav("/app/lab")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faFlask} className="w-3 h-3" />
+                  <span>Back Office (Lab)</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => nav("/app/business/templates")}
@@ -214,27 +280,11 @@ export default function AppShell() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => nav("/app/business/documents")}
-                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
-                >
-                  <FontAwesomeIcon icon={faFileAlt} className="w-3 h-3" />
-                  <span>Document Generation</span>
-                </button>
-                <button
-                  type="button"
                   onClick={() => nav("/app/business/analytics")}
                   className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
                 >
                   <FontAwesomeIcon icon={faChartLine} className="w-3 h-3" />
                   <span>Business Analytics</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => nav("/app/business/reports")}
-                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
-                >
-                  <FontAwesomeIcon icon={faFileExport} className="w-3 h-3" />
-                  <span>Reports & Export</span>
                 </button>
               </div>
             )}
@@ -400,7 +450,7 @@ export default function AppShell() {
             )}
           </div>
 
-          {/* Clients Group */}
+          {/* Quick Actions - Simple client operations */}
           <div>
             <button
               type="button"
@@ -409,7 +459,7 @@ export default function AppShell() {
             >
               <div className="flex items-center gap-2">
                 <FontAwesomeIcon icon={faBuilding} className="w-4 h-4" />
-                <span>Clients</span>
+                <span>Quick Actions</span>
               </div>
               <FontAwesomeIcon 
                 icon={expandedGroups.clients ? faChevronDown : faChevronRight} 
@@ -420,73 +470,35 @@ export default function AppShell() {
               <div className="ml-6 mt-1 space-y-1">
                 <button
                   type="button"
+                  onClick={() => nav("/app/invoices/new")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faFileInvoice} className="w-3 h-3" />
+                  <span>New Invoice</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nav("/app/quotes/new")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faFileContract} className="w-3 h-3" />
+                  <span>New Quote</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nav("/app/receipts/new")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faReceipt} className="w-3 h-3" />
+                  <span>New Receipt</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => nav("/app/clients/new")}
                   className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
                 >
                   <FontAwesomeIcon icon={faUserPlus} className="w-3 h-3" />
                   <span>Add Client</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => nav("/app/clients")}
-                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
-                >
-                  <FontAwesomeIcon icon={faList} className="w-3 h-3" />
-                  <span>Manage Clients</span>
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* CRM Group */}
-          <div>
-            <button
-              type="button"
-              onClick={() => toggleGroup('crm')}
-              className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-gray-700 hover:bg-white/70"
-            >
-              <div className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faUsers} className="w-4 h-4" />
-                <span>CRM</span>
-              </div>
-              <FontAwesomeIcon 
-                icon={expandedGroups.crm ? faChevronDown : faChevronRight} 
-                className="w-3 h-3" 
-              />
-            </button>
-            {expandedGroups.crm && (
-              <div className="ml-6 mt-1 space-y-1">
-                <button
-                  type="button"
-                  onClick={() => nav("/app/crm")}
-                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
-                >
-                  <FontAwesomeIcon icon={faUsers} className="w-3 h-3" />
-                  <span>Dashboard</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => nav("/app/crm/activities")}
-                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
-                >
-                  <FontAwesomeIcon icon={faHandshake} className="w-3 h-3" />
-                  <span>Activities</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => nav("/app/crm/communications")}
-                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
-                >
-                  <FontAwesomeIcon icon={faCommentDots} className="w-3 h-3" />
-                  <span>Communications</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => nav("/app/crm/reminders")}
-                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
-                >
-                  <FontAwesomeIcon icon={faBell} className="w-3 h-3" />
-                  <span>Reminders</span>
                 </button>
               </div>
             )}
@@ -558,11 +570,11 @@ export default function AppShell() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => nav("/app/crm")}
+                  onClick={() => nav("/app/business/reports")}
                   className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
                 >
-                  <FontAwesomeIcon icon={faBuilding} className="w-3 h-3" />
-                  <span>CRM Dashboard</span>
+                  <FontAwesomeIcon icon={faFileExport} className="w-3 h-3" />
+                  <span>Reports & Export</span>
                 </button>
               </div>
             )}

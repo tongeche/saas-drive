@@ -22,6 +22,7 @@ import QuotationNew from "./app/QuotationNew.jsx";
 import QuotationPreview from "./app/QuotationPreview.jsx";
 import ReceiptNew from "./app/ReceiptNew.jsx";
 import ItemNew from "./app/ItemNew.jsx";
+import ManageClients from "./app/ManageClients.jsx";
 import Settings from "./app/Settings.jsx";
 import Cashflow from "./app/Cashflow.jsx";
 import CashflowNew from "./app/CashflowNew.jsx";
@@ -58,6 +59,7 @@ createRoot(document.getElementById("root")).render(
           <Route path="quotes/preview" element={<QuotePreview />} />
           <Route path="quotations/new" element={<QuotationNew />} />
           <Route path="quotations/preview" element={<QuotationPreview />} />
+          <Route path="clients" element={<ManageClients />} />
           <Route path="clients/new" element={<ClientNew />} />
           <Route path="items/new" element={<ItemNew />} />
           <Route path="cashflow" element={<Cashflow />} />

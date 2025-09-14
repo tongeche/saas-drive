@@ -91,19 +91,41 @@ export default function CRM() {
       try {
         setLoading(true);
         
-        const [clientsData, analyticsData, recentCommsData] = await Promise.all([
+        // Load data with individual error handling
+        const promises = [
           getCRMClients(tenant.id, { 
             status: selectedStatus !== 'all' ? selectedStatus : undefined,
             tier: selectedTier !== 'all' ? selectedTier : undefined,
             search: searchTerm || undefined
+          }).catch(err => {
+            console.error('Error loading clients:', err);
+            return [];
           }),
-          getCRMAnalytics(tenant.id),
-          getRecentCommunications(tenant.id, 20)
-        ]);
+          getCRMAnalytics(tenant.id).catch(err => {
+            console.error('Error loading analytics:', err);
+            return {
+              total_clients: 0,
+              active_clients: 0,
+              prospect_clients: 0,
+              total_revenue: 0,
+              avg_satisfaction: 0,
+              revenueByMonth: [],
+              topClients: [],
+              clientGrowth: { lastMonth: 0, thisMonth: 0, growthPercentage: 0 },
+              recentActivities: []
+            };
+          }),
+          getRecentCommunications(tenant.id, 20).catch(err => {
+            console.error('Error loading communications:', err);
+            return [];
+          })
+        ];
 
-        setClients(clientsData);
+        const [clientsData, analyticsData, recentCommsData] = await Promise.all(promises);
+
+        setClients(clientsData || []);
         setAnalytics(analyticsData);
-        setRecentCommunications(recentCommsData);
+        setRecentCommunications(recentCommsData || []);
         setActivities(analyticsData.recentActivities || []);
       } catch (error) {
         console.error('Error loading CRM data:', error);
@@ -111,7 +133,9 @@ export default function CRM() {
         setLoading(false);
       }
     };  const filterClients = () => {
-    let filtered = [...clients];
+    // Ensure clients is always an array
+    const clientsArray = Array.isArray(clients) ? clients : [];
+    let filtered = [...clientsArray];
 
     // Search filter
     if (searchTerm) {
@@ -198,8 +222,9 @@ export default function CRM() {
   };
 
   const getClientActivitiesFiltered = (clientId) => {
-    return activities.filter(activity => activity.client_id === clientId)
-      .sort((a, b) => new Date(b.date) - new Date(a.date));
+    const activitiesArray = Array.isArray(activities) ? activities : [];
+    return activitiesArray.filter(activity => activity.client_id === clientId)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   };
 
   const getActivityIcon = (type) => {
@@ -618,7 +643,7 @@ export default function CRM() {
           <div className="space-y-4">
             {/* Activities */}
             {(activitiesFilter === 'all' || activitiesFilter === 'activities') && 
-              activities.slice(0, 5).map(activity => (
+              (Array.isArray(activities) ? activities : []).slice(0, 5).map(activity => (
               <div key={`activity-${activity.id}`} className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg">
                 <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-sm ${getSatisfactionColor(activity.type)}`}>
                   <FontAwesomeIcon icon={getActivityIcon(activity.type)} className="w-4 h-4" />
@@ -646,7 +671,7 @@ export default function CRM() {
 
             {/* Communications */}
             {(activitiesFilter === 'all' || activitiesFilter === 'communications') && 
-              recentCommunications.slice(0, 5).map(comm => (
+              (Array.isArray(recentCommunications) ? recentCommunications : []).slice(0, 5).map(comm => (
               <div key={`comm-${comm.id}`} className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg">
                 <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
                   comm.type === 'email' ? 'bg-blue-100 text-blue-800' :
@@ -685,7 +710,7 @@ export default function CRM() {
             }
 
             {/* Empty States */}
-            {(activitiesFilter === 'activities' && activities.length === 0) && (
+            {(activitiesFilter === 'activities' && (Array.isArray(activities) ? activities : []).length === 0) && (
               <div className="text-center py-8">
                 <FontAwesomeIcon icon={faHistory} className="w-12 h-12 text-gray-300 mb-4" />
                 <p className="text-gray-600">No activities found</p>
@@ -693,7 +718,7 @@ export default function CRM() {
               </div>
             )}
 
-            {(activitiesFilter === 'communications' && recentCommunications.length === 0) && (
+            {(activitiesFilter === 'communications' && (Array.isArray(recentCommunications) ? recentCommunications : []).length === 0) && (
               <div className="text-center py-8">
                 <FontAwesomeIcon icon={faComments} className="w-12 h-12 text-gray-300 mb-4" />
                 <p className="text-gray-600">No communications found</p>
@@ -701,7 +726,7 @@ export default function CRM() {
               </div>
             )}
 
-            {(activitiesFilter === 'all' && activities.length === 0 && recentCommunications.length === 0) && (
+            {(activitiesFilter === 'all' && (Array.isArray(activities) ? activities : []).length === 0 && (Array.isArray(recentCommunications) ? recentCommunications : []).length === 0) && (
               <div className="text-center py-8">
                 <FontAwesomeIcon icon={faHistory} className="w-12 h-12 text-gray-300 mb-4" />
                 <p className="text-gray-600">No recent activities or communications</p>
@@ -879,9 +904,9 @@ function ClientDetailModal({
                 </button>
               </div>
 
-              {activities.length > 0 ? (
+              {(Array.isArray(activities) ? activities : []).length > 0 ? (
                 <div className="space-y-4">
-                  {activities.map(activity => (
+                  {(Array.isArray(activities) ? activities : []).map(activity => (
                     <div key={activity.id} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0">
@@ -984,7 +1009,7 @@ function CommunicationsTab({ client, communications, formatDate, formatTime }) {
     direction: 'outgoing',
     status: 'sent'
   });
-  const [tenant] = useOutletContext();
+  const { tenant } = useOutletContext() || {};
 
   const handleCreateCommunication = async (e) => {
     e.preventDefault();
@@ -1136,9 +1161,9 @@ function CommunicationsTab({ client, communications, formatDate, formatTime }) {
       )}
 
       {/* Communications List */}
-      {communications && communications.length > 0 ? (
+      {(Array.isArray(communications) ? communications : []).length > 0 ? (
         <div className="space-y-4">
-          {communications.map(comm => (
+          {(Array.isArray(communications) ? communications : []).map(comm => (
             <div key={comm.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
