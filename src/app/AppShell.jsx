@@ -20,7 +20,14 @@ import {
   faPlus,
   faList,
   faMoneyBillWave,
-  faExchangeAlt
+  faExchangeAlt,
+  faBriefcase,
+  faFileAlt,
+  faCopy,
+  faSync,
+  faLayerGroup,
+  faChartLine,
+  faFileExport
 } from "@fortawesome/free-solid-svg-icons";
 import supabase from "../lib/supabase";
 import { loadMyTenants, getActiveTenant, saveActiveTenant } from "../lib/tenantState";
@@ -37,6 +44,7 @@ export default function AppShell() {
   
   // Menu groups state
   const [expandedGroups, setExpandedGroups] = useState({
+    business: false,
     invoices: false,
     receipts: false,
     quotes: false,
@@ -154,6 +162,76 @@ export default function AppShell() {
             <FontAwesomeIcon icon={faFlask} className="w-4 h-4" />
             <span>Back Office (Lab)</span>
           </NavLink>
+
+          {/* Business Group */}
+          <div>
+            <button
+              type="button"
+              onClick={() => toggleGroup('business')}
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-gray-700 hover:bg-white/70"
+            >
+              <div className="flex items-center gap-2">
+                <FontAwesomeIcon icon={faBriefcase} className="w-4 h-4" />
+                <span>Business</span>
+              </div>
+              <FontAwesomeIcon 
+                icon={expandedGroups.business ? faChevronDown : faChevronRight} 
+                className="w-3 h-3" 
+              />
+            </button>
+            {expandedGroups.business && (
+              <div className="ml-6 mt-1 space-y-1">
+                <button
+                  type="button"
+                  onClick={() => nav("/app/business/templates")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />
+                  <span>Invoice Templates</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nav("/app/business/recurring")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faSync} className="w-3 h-3" />
+                  <span>Recurring Invoices</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nav("/app/business/bulk-operations")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faLayerGroup} className="w-3 h-3" />
+                  <span>Bulk Operations</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nav("/app/business/documents")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faFileAlt} className="w-3 h-3" />
+                  <span>Document Generation</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nav("/app/business/analytics")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faChartLine} className="w-3 h-3" />
+                  <span>Business Analytics</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nav("/app/business/reports")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faFileExport} className="w-3 h-3" />
+                  <span>Reports & Export</span>
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Invoices Group */}
           <div>

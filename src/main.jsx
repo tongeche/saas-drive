@@ -25,6 +25,7 @@ import ItemNew from "./app/ItemNew.jsx";
 import Settings from "./app/Settings.jsx";
 import Cashflow from "./app/Cashflow.jsx";
 import CashflowNew from "./app/CashflowNew.jsx";
+import DocumentGeneration from "./app/DocumentGeneration.jsx";
 
 
 
@@ -53,6 +54,7 @@ createRoot(document.getElementById("root")).render(
           <Route path="items/new" element={<ItemNew />} />
           <Route path="cashflow" element={<Cashflow />} />
           <Route path="cashflow/new" element={<CashflowNew />} />
+          <Route path="business/documents" element={<DocumentGeneration />} />
           <Route path="settings" element={<Settings />} />
           <Route path="lab" element={<App />} />
         </Route>
