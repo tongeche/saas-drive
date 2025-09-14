@@ -31,6 +31,7 @@ import Receipts from "./app/Receipts.jsx";
 import ReportsUnderDevelopment from "./app/ReportsUnderDevelopment.jsx";
 import InventoryUnderDevelopment from "./app/InventoryUnderDevelopment.jsx";
 import CRMUnderDevelopment from "./app/CRMUnderDevelopment.jsx";
+import CRM from "./app/CRM.jsx";
 
 
 
@@ -65,7 +66,10 @@ createRoot(document.getElementById("root")).render(
           <Route path="settings" element={<Settings />} />
           <Route path="reports" element={<ReportsUnderDevelopment />} />
           <Route path="inventory" element={<InventoryUnderDevelopment />} />
-          <Route path="crm" element={<CRMUnderDevelopment />} />
+          <Route path="crm" element={<CRM />} />
+          <Route path="crm/activities" element={<CRM />} />
+          <Route path="crm/communications" element={<CRM />} />
+          <Route path="crm/reminders" element={<CRM />} />
           <Route path="lab" element={<App />} />
         </Route>
 

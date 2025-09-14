@@ -27,7 +27,11 @@ import {
   faSync,
   faLayerGroup,
   faChartLine,
-  faFileExport
+  faFileExport,
+  faUsers,
+  faHandshake,
+  faCommentDots,
+  faBell
 } from "@fortawesome/free-solid-svg-icons";
 import supabase from "../lib/supabase";
 import { loadMyTenants, getActiveTenant, saveActiveTenant } from "../lib/tenantState";
@@ -51,6 +55,7 @@ export default function AppShell() {
     quotes: false,
     inventory: false,
     clients: false,
+    crm: false,
     cashflow: false,
     reports: false
   });
@@ -428,6 +433,60 @@ export default function AppShell() {
                 >
                   <FontAwesomeIcon icon={faList} className="w-3 h-3" />
                   <span>Manage Clients</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* CRM Group */}
+          <div>
+            <button
+              type="button"
+              onClick={() => toggleGroup('crm')}
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-gray-700 hover:bg-white/70"
+            >
+              <div className="flex items-center gap-2">
+                <FontAwesomeIcon icon={faUsers} className="w-4 h-4" />
+                <span>CRM</span>
+              </div>
+              <FontAwesomeIcon 
+                icon={expandedGroups.crm ? faChevronDown : faChevronRight} 
+                className="w-3 h-3" 
+              />
+            </button>
+            {expandedGroups.crm && (
+              <div className="ml-6 mt-1 space-y-1">
+                <button
+                  type="button"
+                  onClick={() => nav("/app/crm")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faUsers} className="w-3 h-3" />
+                  <span>Dashboard</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nav("/app/crm/activities")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faHandshake} className="w-3 h-3" />
+                  <span>Activities</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nav("/app/crm/communications")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faCommentDots} className="w-3 h-3" />
+                  <span>Communications</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nav("/app/crm/reminders")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faBell} className="w-3 h-3" />
+                  <span>Reminders</span>
                 </button>
               </div>
             )}
