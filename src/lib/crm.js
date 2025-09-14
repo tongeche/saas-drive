@@ -8,11 +8,7 @@ export async function getCRMClients(tenantId, filters = {}) {
   try {
     let query = supabase
       .from('clients')
-      .select(`
-        *,
-        invoices!inner(count),
-        receipts(count)
-      `)
+      .select('*')
       .eq('tenant_id', tenantId);
 
     // Apply filters
@@ -32,20 +28,22 @@ export async function getCRMClients(tenantId, filters = {}) {
 
     if (error) throw error;
 
-    // Calculate revenue for each client
+    // Calculate revenue and invoice count for each client separately
     const clientsWithRevenue = await Promise.all(
       (data || []).map(async (client) => {
-        const { data: invoiceTotal } = await supabase
+        // Get invoice totals for this client
+        const { data: invoiceData } = await supabase
           .from('invoices')
           .select('total')
           .eq('client_id', client.id)
           .eq('tenant_id', tenantId);
 
-        const totalRevenue = (invoiceTotal || []).reduce((sum, inv) => sum + (inv.total || 0), 0);
+        const totalRevenue = (invoiceData || []).reduce((sum, inv) => sum + (inv.total || 0), 0);
+        const totalInvoices = (invoiceData || []).length;
 
         return {
           ...client,
-          total_invoices: client.invoices?.length || 0,
+          total_invoices: totalInvoices,
           total_revenue: totalRevenue,
           tags: client.tags || [],
           satisfaction_score: client.satisfaction_score || 7,
@@ -157,6 +155,80 @@ export async function createClientCommunication(communicationData) {
     return data;
   } catch (error) {
     console.error('Error creating client communication:', error);
+    throw error;
+  }
+}
+
+// Client Notes Management
+export async function getClientNotes(tenantId, clientId) {
+  try {
+    const { data, error } = await supabase
+      .from('client_notes')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching client notes:', error);
+    throw error;
+  }
+}
+
+export async function createClientNote(tenantId, noteData) {
+  try {
+    const { data, error } = await supabase
+      .from('client_notes')
+      .insert({
+        tenant_id: tenantId,
+        ...noteData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error creating client note:', error);
+    throw error;
+  }
+}
+
+export async function updateClientNote(noteId, updates) {
+  try {
+    const { data, error } = await supabase
+      .from('client_notes')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', noteId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error updating client note:', error);
+    throw error;
+  }
+}
+
+export async function deleteClientNote(noteId) {
+  try {
+    const { error } = await supabase
+      .from('client_notes')
+      .delete()
+      .eq('id', noteId);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error deleting client note:', error);
     throw error;
   }
 }
@@ -291,11 +363,11 @@ export async function getCRMAnalytics(tenantId) {
       .slice(0, 5);
 
     return {
-      totalClients,
-      activeClients,
-      prospectClients,
-      totalRevenue,
-      avgSatisfaction: Math.round(avgSatisfaction * 10) / 10,
+      total_clients: totalClients,
+      active_clients: activeClients,
+      prospect_clients: prospectClients,
+      total_revenue: totalRevenue,
+      avg_satisfaction: Math.round(avgSatisfaction * 10) / 10,
       revenueByMonth,
       topClients,
       clientGrowth: calculateClientGrowth(clients),
@@ -356,7 +428,7 @@ async function getRecentActivities(tenantId, limit = 10) {
 }
 
 // Client Status Management
-export async function updateClientStatus(clientId, status) {
+export async function updateClientStatus(tenantId, clientId, status) {
   try {
     const { data, error } = await supabase
       .from('clients')
@@ -372,6 +444,7 @@ export async function updateClientStatus(clientId, status) {
 
     // Log status change as activity
     await createClientActivity({
+      tenant_id: tenantId,
       client_id: clientId,
       type: 'status_change',
       title: `Status changed to ${status}`,
@@ -388,7 +461,7 @@ export async function updateClientStatus(clientId, status) {
 }
 
 // Client Tier Management
-export async function updateClientTier(clientId, tier) {
+export async function updateClientTier(tenantId, clientId, tier) {
   try {
     const { data, error } = await supabase
       .from('clients')
@@ -404,6 +477,7 @@ export async function updateClientTier(clientId, tier) {
 
     // Log tier change as activity
     await createClientActivity({
+      tenant_id: tenantId,
       client_id: clientId,
       type: 'tier_change',
       title: `Tier changed to ${tier}`,
@@ -420,7 +494,7 @@ export async function updateClientTier(clientId, tier) {
 }
 
 // Client Satisfaction Management
-export async function updateClientSatisfaction(clientId, score, feedback = null) {
+export async function updateClientSatisfaction(tenantId, clientId, score, feedback = null) {
   try {
     const updates = { 
       satisfaction_score: score,
@@ -442,6 +516,7 @@ export async function updateClientSatisfaction(clientId, score, feedback = null)
 
     // Log satisfaction update as activity
     await createClientActivity({
+      tenant_id: tenantId,
       client_id: clientId,
       type: 'satisfaction_update',
       title: `Satisfaction score updated to ${score}/10`,
@@ -458,11 +533,12 @@ export async function updateClientSatisfaction(clientId, score, feedback = null)
 }
 
 // Client Follow-up Reminders
-export async function createFollowUpReminder(clientId, reminderData) {
+export async function createFollowUpReminder(tenantId, clientId, reminderData) {
   try {
     const { data, error } = await supabase
       .from('client_reminders')
       .insert({
+        tenant_id: tenantId,
         client_id: clientId,
         ...reminderData,
         created_at: new Date().toISOString()
@@ -635,6 +711,10 @@ export default {
   deleteClientActivity,
   getClientCommunications,
   createClientCommunication,
+  getClientNotes,
+  createClientNote,
+  updateClientNote,
+  deleteClientNote,
   addClientTag,
   removeClientTag,
   getCRMAnalytics,

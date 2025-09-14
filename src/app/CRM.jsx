@@ -104,8 +104,8 @@ export default function CRM() {
       // If a client is selected, load their activities and communications
       if (selectedClient) {
         const [activitiesData, communicationsData] = await Promise.all([
-          getClientActivities(tenant.id, selectedClient.id),
-          getClientCommunications(tenant.id, selectedClient.id)
+          getClientActivities(selectedClient.id),
+          getClientCommunications(selectedClient.id)
         ]);
         setActivities(activitiesData);
         setCommunications(communicationsData);
@@ -206,7 +206,7 @@ export default function CRM() {
     });
   };
 
-  const getClientActivities = (clientId) => {
+  const getClientActivitiesFiltered = (clientId) => {
     return activities.filter(activity => activity.client_id === clientId)
       .sort((a, b) => new Date(b.date) - new Date(a.date));
   };
@@ -233,13 +233,14 @@ export default function CRM() {
     try {
       if (!tenant?.id || !selectedClient?.id) return;
       
-      const newActivity = await createClientActivity(tenant.id, {
+      const newActivity = await createClientActivity({
+        tenant_id: tenant.id,
         ...activityData,
         client_id: selectedClient.id
       });
       
       // Reload activities for the selected client
-      const updatedActivities = await getClientActivities(tenant.id, selectedClient.id);
+      const updatedActivities = await getClientActivities(selectedClient.id);
       setActivities(updatedActivities);
       
       setShowNewActivityModal(false);
@@ -502,7 +503,7 @@ export default function CRM() {
             <div className="flex gap-2">
               <button
                 onClick={() => setSelectedClient(client)}
-                className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                className="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
               >
                 <FontAwesomeIcon icon={faEye} className="w-4 h-4 mr-2" />
                 View Details
@@ -542,7 +543,7 @@ export default function CRM() {
       {selectedClient && (
         <ClientDetailModal
           client={selectedClient}
-          activities={getClientActivities(selectedClient.id)}
+          activities={getClientActivitiesFiltered(selectedClient.id)}
           onClose={() => setSelectedClient(null)}
           formatCurrency={formatCurrency}
           formatDate={formatDate}
