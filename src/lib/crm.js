@@ -427,6 +427,27 @@ async function getRecentActivities(tenantId, limit = 10) {
   }
 }
 
+// Get recent communications across all clients for a tenant
+export async function getRecentCommunications(tenantId, limit = 10) {
+  try {
+    const { data, error } = await supabase
+      .from('client_communications')
+      .select(`
+        *,
+        client:clients(name, email, company)
+      `)
+      .eq('tenant_id', tenantId)
+      .order('date', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching recent communications:', error);
+    return [];
+  }
+}
+
 // Client Status Management
 export async function updateClientStatus(tenantId, clientId, status) {
   try {
@@ -711,6 +732,7 @@ export default {
   deleteClientActivity,
   getClientCommunications,
   createClientCommunication,
+  getRecentCommunications,
   getClientNotes,
   createClientNote,
   updateClientNote,

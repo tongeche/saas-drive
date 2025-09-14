@@ -8,6 +8,8 @@ import {
   getCRMClients,
   getClientActivities,
   getClientCommunications,
+  createClientCommunication,
+  getRecentCommunications,
   getCRMAnalytics,
   createClientActivity,
   updateClientSatisfaction,
@@ -45,7 +47,12 @@ import {
   faUserTimes,
   faBell,
   faArrowUp,
-  faArrowDown
+  faArrowDown,
+  faTimes,
+  faPaperPlane,
+  faVideo,
+  faMobileAlt,
+  faCommentDots
 } from '@fortawesome/free-solid-svg-icons';
 
 export default function CRM() {
@@ -66,11 +73,13 @@ export default function CRM() {
   // CRM Data
   const [activities, setActivities] = useState([]);
   const [communications, setCommunications] = useState([]);
+  const [recentCommunications, setRecentCommunications] = useState([]);
   const [analytics, setAnalytics] = useState({});
+  const [activitiesFilter, setActivitiesFilter] = useState('all'); // all, activities, communications
 
   useEffect(() => {
     if (tenant?.slug) {
-      loadCRMData();
+      loadData();
     }
   }, [tenant?.slug, selectedStatus, selectedTier, searchTerm]);
 
@@ -78,49 +87,30 @@ export default function CRM() {
     filterClients();
   }, [clients]);
 
-  const loadCRMData = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      
-      if (!tenant?.id) {
-        setError('No tenant found');
-        return;
-      }
-
-      // Load clients with filters
-      const filters = {
-        status: selectedStatus !== 'all' ? selectedStatus : null,
-        tier: selectedTier !== 'all' ? selectedTier : null,
-        search: searchTerm || null
-      };
-
-      const clientsData = await getCRMClients(tenant.id, filters);
-      setClients(clientsData);
-
-      // Load analytics
-      const analyticsData = await getCRMAnalytics(tenant.id);
-      setAnalytics(analyticsData);
-
-      // If a client is selected, load their activities and communications
-      if (selectedClient) {
-        const [activitiesData, communicationsData] = await Promise.all([
-          getClientActivities(selectedClient.id),
-          getClientCommunications(selectedClient.id)
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        const [clientsData, analyticsData, recentCommsData] = await Promise.all([
+          getCRMClients(tenant.id, { 
+            status: selectedStatus !== 'all' ? selectedStatus : undefined,
+            tier: selectedTier !== 'all' ? selectedTier : undefined,
+            search: searchTerm || undefined
+          }),
+          getCRMAnalytics(tenant.id),
+          getRecentCommunications(tenant.id, 20)
         ]);
-        setActivities(activitiesData);
-        setCommunications(communicationsData);
+
+        setClients(clientsData);
+        setAnalytics(analyticsData);
+        setRecentCommunications(recentCommsData);
+        setActivities(analyticsData.recentActivities || []);
+      } catch (error) {
+        console.error('Error loading CRM data:', error);
+      } finally {
+        setLoading(false);
       }
-
-    } catch (err) {
-      console.error('Error loading CRM data:', err);
-      setError('Failed to load CRM data: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filterClients = () => {
+    };  const filterClients = () => {
     let filtered = [...clients];
 
     // Search filter
@@ -574,6 +564,7 @@ export default function CRM() {
         <ClientDetailModal
           client={selectedClient}
           activities={getClientActivitiesFiltered(selectedClient.id)}
+          communications={communications}
           onClose={() => setSelectedClient(null)}
           formatCurrency={formatCurrency}
           formatDate={formatDate}
@@ -588,24 +579,135 @@ export default function CRM() {
       {/* Activities Tab */}
       {mainActiveTab === 'activities' && (
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Activities & Communications</h3>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setActivitiesFilter('all')}
+                className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                  activitiesFilter === 'all' 
+                    ? 'bg-blue-100 text-blue-800' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                All
+              </button>
+              <button 
+                onClick={() => setActivitiesFilter('activities')}
+                className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                  activitiesFilter === 'activities' 
+                    ? 'bg-blue-100 text-blue-800' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Activities
+              </button>
+              <button 
+                onClick={() => setActivitiesFilter('communications')}
+                className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                  activitiesFilter === 'communications' 
+                    ? 'bg-blue-100 text-blue-800' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Communications
+              </button>
+            </div>
+          </div>
+          
           <div className="space-y-4">
-            {activities.slice(0, 10).map(activity => (
-              <div key={activity.id} className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg">
+            {/* Activities */}
+            {(activitiesFilter === 'all' || activitiesFilter === 'activities') && 
+              activities.slice(0, 5).map(activity => (
+              <div key={`activity-${activity.id}`} className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg">
                 <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-sm ${getSatisfactionColor(activity.type)}`}>
                   <FontAwesomeIcon icon={getActivityIcon(activity.type)} className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">
-                    {activity.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                  </p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-sm font-medium text-gray-900">
+                      {activity.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </p>
+                    <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">Activity</span>
+                  </div>
                   <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
+                  {activity.client && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Client: {activity.client.name}
+                    </p>
+                  )}
                   <p className="text-xs text-gray-500 mt-1">
                     {formatDate(activity.created_at)} at {formatTime(activity.created_at)}
                   </p>
                 </div>
               </div>
-            ))}
+              ))
+            }
+
+            {/* Communications */}
+            {(activitiesFilter === 'all' || activitiesFilter === 'communications') && 
+              recentCommunications.slice(0, 5).map(comm => (
+              <div key={`comm-${comm.id}`} className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg">
+                <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+                  comm.type === 'email' ? 'bg-blue-100 text-blue-800' :
+                  comm.type === 'phone' ? 'bg-green-100 text-green-800' :
+                  comm.type === 'sms' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  <FontAwesomeIcon icon={
+                    comm.type === 'email' ? faEnvelope :
+                    comm.type === 'phone' ? faPhone :
+                    comm.type === 'sms' ? faCommentDots :
+                    faComments
+                  } className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-sm font-medium text-gray-900">{comm.subject}</p>
+                    <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Communication</span>
+                    <FontAwesomeIcon 
+                      icon={comm.direction === 'incoming' ? faArrowDown : faArrowUp} 
+                      className={`w-3 h-3 ${comm.direction === 'incoming' ? 'text-green-600' : 'text-blue-600'}`}
+                    />
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">{comm.content}</p>
+                  {comm.client && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Client: {comm.client.name} {comm.client.company && `(${comm.client.company})`}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formatDate(comm.date)} at {formatTime(comm.date)}
+                  </p>
+                </div>
+              </div>
+              ))
+            }
+
+            {/* Empty States */}
+            {(activitiesFilter === 'activities' && activities.length === 0) && (
+              <div className="text-center py-8">
+                <FontAwesomeIcon icon={faHistory} className="w-12 h-12 text-gray-300 mb-4" />
+                <p className="text-gray-600">No activities found</p>
+                <p className="text-sm text-gray-500">Activities will appear here when clients interact with your business</p>
+              </div>
+            )}
+
+            {(activitiesFilter === 'communications' && recentCommunications.length === 0) && (
+              <div className="text-center py-8">
+                <FontAwesomeIcon icon={faComments} className="w-12 h-12 text-gray-300 mb-4" />
+                <p className="text-gray-600">No communications found</p>
+                <p className="text-sm text-gray-500">Communications will appear here when you log client interactions</p>
+              </div>
+            )}
+
+            {(activitiesFilter === 'all' && activities.length === 0 && recentCommunications.length === 0) && (
+              <div className="text-center py-8">
+                <FontAwesomeIcon icon={faHistory} className="w-12 h-12 text-gray-300 mb-4" />
+                <p className="text-gray-600">No recent activities or communications</p>
+                <p className="text-sm text-gray-500">Activities and communications will appear here as you interact with clients</p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -625,6 +727,7 @@ export default function CRM() {
 function ClientDetailModal({ 
   client, 
   activities, 
+  communications,
   onClose, 
   formatCurrency, 
   formatDate, 
@@ -657,6 +760,7 @@ function ClientDetailModal({
             {[
               { id: 'overview', label: 'Overview', icon: faEye },
               { id: 'activities', label: 'Activities', icon: faHistory },
+              { id: 'communications', label: 'Communications', icon: faComments },
               { id: 'analytics', label: 'Analytics', icon: faChartLine }
             ].map(tab => (
               <button
@@ -816,6 +920,15 @@ function ClientDetailModal({
             </div>
           )}
 
+          {activeTab === 'communications' && (
+            <CommunicationsTab 
+              client={client}
+              communications={communications}
+              formatDate={formatDate}
+              formatTime={formatTime}
+            />
+          )}
+
           {activeTab === 'analytics' && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900">Client Analytics</h3>
@@ -856,6 +969,238 @@ function ClientDetailModal({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Communications Tab Component
+function CommunicationsTab({ client, communications, formatDate, formatTime }) {
+  const [showNewCommunication, setShowNewCommunication] = useState(false);
+  const [newCommunication, setNewCommunication] = useState({
+    type: 'email',
+    subject: '',
+    content: '',
+    direction: 'outgoing',
+    status: 'sent'
+  });
+  const [tenant] = useOutletContext();
+
+  const handleCreateCommunication = async (e) => {
+    e.preventDefault();
+    try {
+      await createClientCommunication({
+        tenant_id: tenant.id,
+        client_id: client.id,
+        ...newCommunication,
+        date: new Date().toISOString()
+      });
+      
+      // Reset form
+      setNewCommunication({
+        type: 'email',
+        subject: '',
+        content: '',
+        direction: 'outgoing',
+        status: 'sent'
+      });
+      setShowNewCommunication(false);
+      
+      // Refresh communications (would need to trigger parent refresh)
+      window.location.reload();
+    } catch (error) {
+      console.error('Error creating communication:', error);
+    }
+  };
+
+  const getCommTypeIcon = (type) => {
+    switch (type) {
+      case 'email': return faEnvelope;
+      case 'phone': return faPhone;
+      case 'sms': return faMobileAlt;
+      case 'whatsapp': return faCommentDots;
+      case 'video': return faVideo;
+      case 'meeting': return faCalendarAlt;
+      default: return faComments;
+    }
+  };
+
+  const getCommTypeColor = (type) => {
+    switch (type) {
+      case 'email': return 'bg-blue-100 text-blue-800';
+      case 'phone': return 'bg-green-100 text-green-800';
+      case 'sms': return 'bg-yellow-100 text-yellow-800';
+      case 'whatsapp': return 'bg-green-100 text-green-800';
+      case 'video': return 'bg-purple-100 text-purple-800';
+      case 'meeting': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getDirectionIcon = (direction) => {
+    return direction === 'incoming' ? faArrowDown : faArrowUp;
+  };
+
+  const getDirectionColor = (direction) => {
+    return direction === 'incoming' ? 'text-green-600' : 'text-blue-600';
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-gray-900">Communications</h3>
+        <button 
+          onClick={() => setShowNewCommunication(true)}
+          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+        >
+          <FontAwesomeIcon icon={faPlus} className="w-4 h-4 mr-2" />
+          Log Communication
+        </button>
+      </div>
+
+      {/* New Communication Form */}
+      {showNewCommunication && (
+        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+          <h4 className="font-medium text-gray-900 mb-4">Log New Communication</h4>
+          <form onSubmit={handleCreateCommunication} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                <select
+                  value={newCommunication.type}
+                  onChange={(e) => setNewCommunication({...newCommunication, type: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  required
+                >
+                  <option value="email">Email</option>
+                  <option value="phone">Phone Call</option>
+                  <option value="sms">SMS</option>
+                  <option value="whatsapp">WhatsApp</option>
+                  <option value="video">Video Call</option>
+                  <option value="meeting">In-Person Meeting</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Direction</label>
+                <select
+                  value={newCommunication.direction}
+                  onChange={(e) => setNewCommunication({...newCommunication, direction: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  required
+                >
+                  <option value="outgoing">Outgoing</option>
+                  <option value="incoming">Incoming</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Subject/Title</label>
+              <input
+                type="text"
+                value={newCommunication.subject}
+                onChange={(e) => setNewCommunication({...newCommunication, subject: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Communication subject or title"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Content/Notes</label>
+              <textarea
+                value={newCommunication.content}
+                onChange={(e) => setNewCommunication({...newCommunication, content: e.target.value})}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Communication details, notes, or summary"
+                required
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+              >
+                <FontAwesomeIcon icon={faPaperPlane} className="w-4 h-4 mr-2" />
+                Log Communication
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowNewCommunication(false)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Communications List */}
+      {communications && communications.length > 0 ? (
+        <div className="space-y-4">
+          {communications.map(comm => (
+            <div key={comm.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getCommTypeColor(comm.type)}`}>
+                    <FontAwesomeIcon icon={getCommTypeIcon(comm.type)} className="w-5 h-5" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium text-gray-900">{comm.subject}</h4>
+                      <FontAwesomeIcon 
+                        icon={getDirectionIcon(comm.direction)} 
+                        className={`w-4 h-4 ${getDirectionColor(comm.direction)}`}
+                        title={comm.direction === 'incoming' ? 'Incoming' : 'Outgoing'}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCommTypeColor(comm.type)}`}>
+                        {comm.type.charAt(0).toUpperCase() + comm.type.slice(1)}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {formatDate(comm.date)} at {formatTime(comm.date)}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2">{comm.content}</p>
+                  {comm.duration && (
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <span><FontAwesomeIcon icon={faClock} className="w-3 h-3 mr-1" />Duration: {comm.duration} min</span>
+                    </div>
+                  )}
+                  {comm.status && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        comm.status === 'sent' ? 'bg-green-100 text-green-800' :
+                        comm.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        comm.status === 'failed' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {comm.status.charAt(0).toUpperCase() + comm.status.slice(1)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-8">
+          <FontAwesomeIcon icon={faComments} className="w-12 h-12 text-gray-300 mb-4" />
+          <p className="text-gray-600">No communications recorded yet</p>
+          <p className="text-sm text-gray-500 mb-4">Start logging communications to track client interactions</p>
+          <button 
+            onClick={() => setShowNewCommunication(true)}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+          >
+            <FontAwesomeIcon icon={faPlus} className="w-4 h-4 mr-2" />
+            Log First Communication
+          </button>
+        </div>
+      )}
     </div>
   );
 }
