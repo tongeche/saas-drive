@@ -714,10 +714,11 @@ export default function CRM() {
 
       {/* Analytics Tab */}
       {mainActiveTab === 'analytics' && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Analytics Dashboard</h3>
-          <p className="text-gray-600">Advanced analytics and reporting features coming soon.</p>
-        </div>
+        <AnalyticsDashboard 
+          analytics={analytics}
+          formatCurrency={formatCurrency}
+          formatDate={formatDate}
+        />
       )}
     </div>
   );
