@@ -31,6 +31,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import supabase from "../lib/supabase";
 import { loadMyTenants, getActiveTenant, saveActiveTenant } from "../lib/tenantState";
+import AIAssistant from "../components/AIAssistant";
 
 export default function AppShell() {
   const nav = useNavigate();
@@ -50,7 +51,8 @@ export default function AppShell() {
     quotes: false,
     inventory: false,
     clients: false,
-    cashflow: false
+    cashflow: false,
+    reports: false
   });
 
   const setTenant = (t) => {
@@ -383,7 +385,7 @@ export default function AppShell() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => nav("/app/items")}
+                  onClick={() => nav("/app/inventory")}
                   className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
                 >
                   <FontAwesomeIcon icon={faList} className="w-3 h-3" />
@@ -464,6 +466,44 @@ export default function AppShell() {
                 >
                   <FontAwesomeIcon icon={faPlus} className="w-3 h-3" />
                   <span>Add Transaction</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Reports Group */}
+          <div>
+            <button
+              type="button"
+              onClick={() => toggleGroup('reports')}
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-gray-700 hover:bg-white/70"
+            >
+              <div className="flex items-center gap-2">
+                <FontAwesomeIcon icon={faChartLine} className="w-4 h-4" />
+                <span>Reports</span>
+              </div>
+              <FontAwesomeIcon 
+                icon={expandedGroups.reports ? faChevronDown : faChevronRight} 
+                className="w-3 h-3" 
+              />
+            </button>
+            {expandedGroups.reports && (
+              <div className="ml-6 mt-1 space-y-1">
+                <button
+                  type="button"
+                  onClick={() => nav("/app/reports")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faChartLine} className="w-3 h-3" />
+                  <span>Business Analytics</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nav("/app/crm")}
+                  className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-white/50"
+                >
+                  <FontAwesomeIcon icon={faBuilding} className="w-3 h-3" />
+                  <span>CRM Dashboard</span>
                 </button>
               </div>
             )}
@@ -552,6 +592,13 @@ export default function AppShell() {
           </div>
         </main>
       </div>
+
+      {/* AI Assistant */}
+      <AIAssistant 
+        context="Business Management Assistant" 
+        tenant={tenant}
+        currentPage={loc.pathname}
+      />
     </div>
   );
 }

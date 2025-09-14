@@ -26,6 +26,11 @@ import Settings from "./app/Settings.jsx";
 import Cashflow from "./app/Cashflow.jsx";
 import CashflowNew from "./app/CashflowNew.jsx";
 import DocumentGeneration from "./app/DocumentGeneration.jsx";
+import Invoices from "./app/Invoices.jsx";
+import Receipts from "./app/Receipts.jsx";
+import ReportsUnderDevelopment from "./app/ReportsUnderDevelopment.jsx";
+import InventoryUnderDevelopment from "./app/InventoryUnderDevelopment.jsx";
+import CRMUnderDevelopment from "./app/CRMUnderDevelopment.jsx";
 
 
 
@@ -42,20 +47,25 @@ createRoot(document.getElementById("root")).render(
 
         <Route path="/app" element={<AppShell />}>
           <Route index element={<Dashboard />} />
+          <Route path="invoices" element={<Invoices />} />
           <Route path="invoices/new" element={<InvoiceNew />} />
           <Route path="invoices/wizard" element={<InvoiceWizard />} />
           <Route path="invoices/:id/pay" element={<InvoicePay />} />
+          <Route path="receipts" element={<Receipts />} />
+          <Route path="receipts/new" element={<ReceiptNew />} />
           <Route path="quotes/new" element={<QuoteNew />} />
           <Route path="quotes/preview" element={<QuotePreview />} />
           <Route path="quotations/new" element={<QuotationNew />} />
           <Route path="quotations/preview" element={<QuotationPreview />} />
-          <Route path="receipts/new" element={<ReceiptNew />} />
           <Route path="clients/new" element={<ClientNew />} />
           <Route path="items/new" element={<ItemNew />} />
           <Route path="cashflow" element={<Cashflow />} />
           <Route path="cashflow/new" element={<CashflowNew />} />
           <Route path="business/documents" element={<DocumentGeneration />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="reports" element={<ReportsUnderDevelopment />} />
+          <Route path="inventory" element={<InventoryUnderDevelopment />} />
+          <Route path="crm" element={<CRMUnderDevelopment />} />
           <Route path="lab" element={<App />} />
         </Route>
 

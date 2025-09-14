@@ -35,6 +35,7 @@ export default function Settings() {
   const [invoiceSettings, setInvoiceSettings] = useState({
     currency: 'EUR',
     timezone: 'Europe/Lisbon',
+    default_payment_method: 'Cash',
     number_prefix_invoice: 'INV-',
     invoice_footer: '',
     payment_terms: 'Payment due within 30 days'
@@ -64,6 +65,7 @@ export default function Settings() {
       setInvoiceSettings({
         currency: tenant.currency || 'EUR',
         timezone: tenant.timezone || 'Europe/Lisbon',
+        default_payment_method: tenant.default_payment_method || 'Cash',
         number_prefix_invoice: tenant.number_prefix_invoice || 'INV-',
         invoice_footer: tenant.invoice_footer || '',
         payment_terms: tenant.payment_terms || 'Payment due within 30 days'
@@ -327,6 +329,7 @@ export default function Settings() {
                       <option value="EUR">EUR (€)</option>
                       <option value="USD">USD ($)</option>
                       <option value="GBP">GBP (£)</option>
+                      <option value="KES">KES (KSh)</option>
                     </select>
                   </div>
                   <button
@@ -602,9 +605,13 @@ export default function Settings() {
                 <option value="EUR">EUR (€)</option>
                 <option value="USD">USD ($)</option>
                 <option value="GBP">GBP (£)</option>
+                <option value="KES">KES (KSh)</option>
                 <option value="CAD">CAD (C$)</option>
                 <option value="AUD">AUD (A$)</option>
               </select>
+              <p className="text-xs text-gray-500 mt-1">
+                This currency will be used for all invoices, receipts, and financial calculations
+              </p>
             </div>
 
             <div>
@@ -621,7 +628,36 @@ export default function Settings() {
                 <option value="America/New_York">America/New_York</option>
                 <option value="America/Los_Angeles">America/Los_Angeles</option>
                 <option value="Asia/Tokyo">Asia/Tokyo</option>
+                <option value="Africa/Nairobi">Africa/Nairobi (East Africa)</option>
+                <option value="Africa/Lagos">Africa/Lagos (West Africa)</option>
+                <option value="Africa/Cairo">Africa/Cairo (North Africa)</option>
+                <option value="Africa/Johannesburg">Africa/Johannesburg (South Africa)</option>
               </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Affects date and time display throughout the application
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Default Payment Method
+              </label>
+              <select
+                value={invoiceSettings.default_payment_method}
+                onChange={(e) => setInvoiceSettings(prev => ({ ...prev, default_payment_method: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm sm:text-base"
+              >
+                <option value="Cash">Cash</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Credit Card">Credit Card</option>
+                <option value="Debit Card">Debit Card</option>
+                <option value="Mobile Money">Mobile Money</option>
+                <option value="Check">Check</option>
+                <option value="Other">Other</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Default payment method for receipts and transactions
+              </p>
             </div>
 
             <div>
@@ -635,6 +671,9 @@ export default function Settings() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm sm:text-base"
                 placeholder="INV-"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Prefix for automatically generated invoice numbers
+              </p>
             </div>
           </div>
 

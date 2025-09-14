@@ -23,6 +23,7 @@ import {
   faMagic
 } from "@fortawesome/free-solid-svg-icons";
 import { listClients } from "../lib/clients";
+import CardAIAssistant from "../components/CardAIAssistant";
 
 export default function DocumentGeneration() {
   const { tenant } = useOutletContext() || {};
@@ -32,6 +33,7 @@ export default function DocumentGeneration() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [clients, setClients] = useState([]);
   const [isLoadingClients, setIsLoadingClients] = useState(true);
+  const [aiAssistantVisible, setAiAssistantVisible] = useState(false);
 
   // Load clients when component mounts
   useEffect(() => {
@@ -254,6 +256,14 @@ Generated on: {{currentDate}}
     }
   };
 
+  // Handle AI assistant field updates
+  const handleAIFieldUpdate = (fieldName, fieldValue) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: fieldValue
+    }));
+  };
+
   const generateDocument = async () => {
     setIsGenerating(true);
     
@@ -330,8 +340,19 @@ Generated on: {{currentDate}}
             <div
               key={template.id}
               onClick={() => handleTemplateSelect(template)}
-              className="group bg-white rounded-3xl shadow-sm ring-1 ring-black/5 p-8 cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 hover:ring-2 hover:ring-blue-500/20"
+              onMouseEnter={() => setAiAssistantVisible(template.id)}
+              onMouseLeave={() => setAiAssistantVisible(false)}
+              className="group relative bg-white rounded-3xl shadow-sm ring-1 ring-black/5 p-8 cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 hover:ring-2 hover:ring-blue-500/20"
             >
+              {/* AI Assistant for this card */}
+              <CardAIAssistant
+                cardType={template.id}
+                onFieldUpdate={handleAIFieldUpdate}
+                currentFormData={formData}
+                tenant={tenant}
+                isVisible={aiAssistantVisible === template.id}
+              />
+              
               <div className="flex items-center gap-4 mb-6">
                 <div className={`p-4 rounded-2xl ${
                   template.color === 'blue' ? 'bg-gradient-to-br from-blue-50 to-blue-100' :
@@ -378,7 +399,16 @@ Generated on: {{currentDate}}
         /* Document Generation Interface */
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Form Panel */}
-          <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-8">
+          <div className="relative bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-8">
+            {/* AI Assistant for form */}
+            <CardAIAssistant
+              cardType={selectedTemplate.id}
+              onFieldUpdate={handleAIFieldUpdate}
+              currentFormData={formData}
+              tenant={tenant}
+              isVisible={true}
+            />
+            
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-4">
                 <div className={`p-3 rounded-xl ${

@@ -1,11 +1,42 @@
-# SaaS (Drive-backed) — Minimal Scaffold
+# SaaS Drive — Finovo Business Management Platform
 
-Netlify + Vite (React) SPA, Netlify Functions as API. Google Drive/Sheets/Docs to be wired next.
+A complete business management platform built with Netlify + Vite (React) SPA, Netlify Functions as API, and Supabase for data storage. Features include invoice management, receipt processing with OCR, expense tracking, and more.
 
-## Dev
+## Features
+
+### ✅ Completed
+- **Invoice Management** - Create, view, manage invoices with PDF generation
+- **Receipt Management** - Upload receipts with OCR, approval workflow, expense tracking
+- **Client Management** - Comprehensive client database
+- **Dashboard** - Real-time analytics and overview
+- **Mobile-Responsive** - Optimized for all devices
+
+### 🚧 In Development
+- Advanced reporting and analytics
+- Inventory management
+- CRM features
+
+## Development
+
+### Quick Start
+```bash
 npm install
-npm run dev
-# in another terminal: netlify dev (to run functions locally)
+npm run dev  # Starts both frontend and API functions
+```
+
+### Frontend Only (Limited functionality)
+```bash
+npm run dev:frontend  # Only React app, API functions not available
+```
+
+The receipt system and some features require the full development environment (`npm run dev`) to access Netlify functions.
+
+## Environment Setup
+
+Required environment variables (see `.env` file):
+- `SUPABASE_URL` - Your Supabase project URL
+- `SUPABASE_ANON_KEY` - Your Supabase anonymous key
+- Google integration variables for Drive/Sheets features
 
 ## Deploy
 - Push to GitHub
