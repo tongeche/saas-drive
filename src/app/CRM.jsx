@@ -5,6 +5,16 @@ import React, { useState, useEffect } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
+  getCRMClients,
+  getClientActivities,
+  getClientCommunications,
+  getCRMAnalytics,
+  createClientActivity,
+  updateClientSatisfaction,
+  createClientNote,
+  getClientNotes
+} from '../lib/crm.js';
+import {
   faUsers,
   faUserPlus,
   faPhone,
@@ -17,7 +27,7 @@ import {
   faTrash,
   faTags,
   faBuilding,
-  faNotes,
+  faStickyNote,
   faMapMarkerAlt,
   faSearch,
   faFilter,
@@ -61,137 +71,49 @@ export default function CRM() {
     if (tenant?.slug) {
       loadCRMData();
     }
-  }, [tenant?.slug]);
+  }, [tenant?.slug, selectedStatus, selectedTier, searchTerm]);
 
   useEffect(() => {
     filterClients();
-  }, [clients, searchTerm, selectedStatus, selectedTier]);
+  }, [clients]);
 
   const loadCRMData = async () => {
     try {
       setLoading(true);
       setError('');
       
-      // For development, use mock data
-      const mockClients = [
-        {
-          id: 1,
-          name: 'Acme Corporation',
-          email: 'contact@acme.com',
-          phone: '+254712345678',
-          company: 'Acme Corp',
-          address: 'Nairobi, Kenya',
-          status: 'active',
-          tier: 'premium',
-          created_at: '2024-01-15T10:00:00Z',
-          last_contact: '2024-09-10T14:30:00Z',
-          total_invoices: 15,
-          total_revenue: 450000,
-          currency: 'KES',
-          notes: 'Important client - prefers email communication',
-          tags: ['premium', 'recurring', 'referral-source'],
-          satisfaction_score: 9,
-          payment_terms: 30,
-          preferred_contact: 'email'
-        },
-        {
-          id: 2,
-          name: 'Jane Smith',
-          email: 'jane@startup.co.ke',
-          phone: '+254798765432',
-          company: 'Tech Startup Ltd',
-          address: 'Mombasa, Kenya',
-          status: 'active',
-          tier: 'standard',
-          created_at: '2024-03-20T09:15:00Z',
-          last_contact: '2024-09-05T11:20:00Z',
-          total_invoices: 8,
-          total_revenue: 125000,
-          currency: 'KES',
-          notes: 'Growing business, potential for upgrade',
-          tags: ['tech', 'growth'],
-          satisfaction_score: 8,
-          payment_terms: 15,
-          preferred_contact: 'phone'
-        },
-        {
-          id: 3,
-          name: 'Michael Johnson',
-          email: 'mjohnson@retail.com',
-          phone: '+254756789123',
-          company: 'Johnson Retail',
-          address: 'Kisumu, Kenya',
-          status: 'prospect',
-          tier: 'basic',
-          created_at: '2024-08-10T16:45:00Z',
-          last_contact: '2024-08-15T10:00:00Z',
-          total_invoices: 2,
-          total_revenue: 35000,
-          currency: 'KES',
-          notes: 'Interested in our services, follow up needed',
-          tags: ['prospect', 'retail'],
-          satisfaction_score: 7,
-          payment_terms: 30,
-          preferred_contact: 'email'
-        }
-      ];
+      if (!tenant?.id) {
+        setError('No tenant found');
+        return;
+      }
 
-      const mockActivities = [
-        {
-          id: 1,
-          client_id: 1,
-          type: 'call',
-          title: 'Follow-up call regarding Q4 requirements',
-          description: 'Discussed upcoming projects and budget planning',
-          date: '2024-09-10T14:30:00Z',
-          duration: 30,
-          outcome: 'positive',
-          next_action: 'Send proposal by Friday',
-          created_by: 'Current User'
-        },
-        {
-          id: 2,
-          client_id: 1,
-          type: 'email',
-          title: 'Invoice payment confirmation',
-          description: 'Confirmed receipt of payment for Invoice #INV-2024-045',
-          date: '2024-09-08T09:15:00Z',
-          outcome: 'completed',
-          created_by: 'Current User'
-        },
-        {
-          id: 3,
-          client_id: 2,
-          type: 'meeting',
-          title: 'Strategy planning session',
-          description: 'Discussed digital transformation roadmap',
-          date: '2024-09-05T11:20:00Z',
-          duration: 60,
-          outcome: 'positive',
-          next_action: 'Prepare technical proposal',
-          created_by: 'Current User'
-        }
-      ];
+      // Load clients with filters
+      const filters = {
+        status: selectedStatus !== 'all' ? selectedStatus : null,
+        tier: selectedTier !== 'all' ? selectedTier : null,
+        search: searchTerm || null
+      };
 
-      setClients(mockClients);
-      setActivities(mockActivities);
-      
-      // Calculate analytics
-      const totalRevenue = mockClients.reduce((sum, client) => sum + client.total_revenue, 0);
-      const activeClients = mockClients.filter(c => c.status === 'active').length;
-      const avgSatisfaction = mockClients.reduce((sum, client) => sum + client.satisfaction_score, 0) / mockClients.length;
-      
-      setAnalytics({
-        totalClients: mockClients.length,
-        activeClients,
-        totalRevenue,
-        avgSatisfaction: Math.round(avgSatisfaction * 10) / 10,
-        currency: 'KES'
-      });
+      const clientsData = await getCRMClients(tenant.id, filters);
+      setClients(clientsData);
+
+      // Load analytics
+      const analyticsData = await getCRMAnalytics(tenant.id);
+      setAnalytics(analyticsData);
+
+      // If a client is selected, load their activities and communications
+      if (selectedClient) {
+        const [activitiesData, communicationsData] = await Promise.all([
+          getClientActivities(tenant.id, selectedClient.id),
+          getClientCommunications(tenant.id, selectedClient.id)
+        ]);
+        setActivities(activitiesData);
+        setCommunications(communicationsData);
+      }
 
     } catch (err) {
       console.error('Error loading CRM data:', err);
-      setError('Failed to load CRM data');
+      setError('Failed to load CRM data: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -294,16 +216,68 @@ export default function CRM() {
       call: faPhone,
       email: faEnvelope,
       meeting: faUsers,
-      note: faNotes,
+      note: faStickyNote,
       task: faClock
     };
-    return icons[type] || faNotes;
+    return icons[type] || faStickyNote;
   };
 
   const getSatisfactionColor = (score) => {
     if (score >= 8) return 'text-green-600';
     if (score >= 6) return 'text-yellow-600';
     return 'text-red-600';
+  };
+
+  // Handler functions for database operations
+  const handleCreateActivity = async (activityData) => {
+    try {
+      if (!tenant?.id || !selectedClient?.id) return;
+      
+      const newActivity = await createClientActivity(tenant.id, {
+        ...activityData,
+        client_id: selectedClient.id
+      });
+      
+      // Reload activities for the selected client
+      const updatedActivities = await getClientActivities(tenant.id, selectedClient.id);
+      setActivities(updatedActivities);
+      
+      setShowNewActivityModal(false);
+    } catch (error) {
+      console.error('Error creating activity:', error);
+      setError('Failed to create activity: ' + error.message);
+    }
+  };
+
+  const handleUpdateClientSatisfaction = async (clientId, score, feedback) => {
+    try {
+      if (!tenant?.id) return;
+      
+      await updateClientSatisfaction(tenant.id, clientId, score, feedback);
+      
+      // Reload clients to reflect changes
+      loadCRMData();
+    } catch (error) {
+      console.error('Error updating satisfaction:', error);
+      setError('Failed to update satisfaction score: ' + error.message);
+    }
+  };
+
+  const handleCreateNote = async (noteData) => {
+    try {
+      if (!tenant?.id || !selectedClient?.id) return;
+      
+      await createClientNote(tenant.id, {
+        ...noteData,
+        client_id: selectedClient.id
+      });
+      
+      // Reload client data if notes are displayed
+      loadCRMData();
+    } catch (error) {
+      console.error('Error creating note:', error);
+      setError('Failed to create note: ' + error.message);
+    }
   };
 
   if (loading) {
@@ -347,7 +321,7 @@ export default function CRM() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Clients</p>
-              <p className="text-2xl font-bold text-gray-900">{analytics.totalClients}</p>
+              <p className="text-2xl font-bold text-gray-900">{analytics.total_clients || 0}</p>
             </div>
             <FontAwesomeIcon icon={faUsers} className="w-8 h-8 text-blue-600" />
           </div>
@@ -357,7 +331,7 @@ export default function CRM() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Active Clients</p>
-              <p className="text-2xl font-bold text-green-600">{analytics.activeClients}</p>
+              <p className="text-2xl font-bold text-green-600">{analytics.active_clients || 0}</p>
             </div>
             <FontAwesomeIcon icon={faUserCheck} className="w-8 h-8 text-green-600" />
           </div>
@@ -368,7 +342,7 @@ export default function CRM() {
             <div>
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
               <p className="text-2xl font-bold text-purple-600">
-                {formatCurrency(analytics.totalRevenue, analytics.currency)}
+                {formatCurrency(analytics.total_revenue || 0, 'KES')}
               </p>
             </div>
             <FontAwesomeIcon icon={faMoneyBillWave} className="w-8 h-8 text-purple-600" />
@@ -378,12 +352,10 @@ export default function CRM() {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Avg Satisfaction</p>
-              <p className={`text-2xl font-bold ${getSatisfactionColor(analytics.avgSatisfaction)}`}>
-                {analytics.avgSatisfaction}/10
-              </p>
+              <p className="text-sm font-medium text-gray-600">Avg. Satisfaction</p>
+              <p className="text-2xl font-bold text-yellow-600">{analytics.avg_satisfaction || 0}/10</p>
             </div>
-            <FontAwesomeIcon icon={faStar} className={`w-8 h-8 ${getSatisfactionColor(analytics.avgSatisfaction)}`} />
+            <FontAwesomeIcon icon={faStar} className="w-8 h-8 text-yellow-600" />
           </div>
         </div>
       </div>
@@ -512,7 +484,7 @@ export default function CRM() {
                 <span className="text-sm font-medium">{client.satisfaction_score}/10</span>
               </div>
               <div className="text-xs text-gray-500">
-                Last contact: {formatDate(client.last_contact)}
+                Last contact: {client.last_contact_date ? formatDate(client.last_contact_date) : 'Never'}
               </div>
             </div>
 
