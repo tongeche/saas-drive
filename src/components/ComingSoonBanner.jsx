@@ -42,7 +42,7 @@ export default function ComingSoonBanner({
           <div className="flex items-center gap-3">
             <FontAwesomeIcon icon={faTools} className="w-5 h-5 text-blue-600" />
             <div>
-              <h3 className="font-medium text-gray-900">{featureName} is coming soon!</h3>
+              <h3 className="font-medium text-gray-900 dark:text-white">{featureName} is coming soon!</h3>
               <p className="text-sm text-gray-600">Estimated: {estimatedDays} days</p>
             </div>
           </div>
@@ -65,7 +65,7 @@ export default function ComingSoonBanner({
             <FontAwesomeIcon icon={faTools} className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">{featureName}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{featureName}</h3>
             <p className="text-sm text-gray-600">Feature under development</p>
           </div>
         </div>

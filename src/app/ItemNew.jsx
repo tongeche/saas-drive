@@ -12,11 +12,12 @@ export default function ItemNew() {
   // Item fields
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [unit, setUnit] = useState("each");
-  const [unitPrice, setUnitPrice] = useState("");
+  const [unitOfMeasurement, setUnitOfMeasurement] = useState("each");
+  const [defaultPrice, setDefaultPrice] = useState("");
   const [taxRate, setTaxRate] = useState(16);
   const [category, setCategory] = useState("");
   const [sku, setSku] = useState("");
+  const [isService, setIsService] = useState(false);
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -32,13 +33,14 @@ export default function ItemNew() {
       await createItem(tenant.id, {
         name: name.trim(),
         description: description.trim() || null,
-        unit,
-        unit_price: Number(unitPrice) || 0,
+        unit_of_measurement: unitOfMeasurement,
+        default_price: Number(defaultPrice) || 0,
         tax_rate: Number(taxRate) || 0,
         category: category.trim() || null,
-        sku: sku.trim() || null
+        sku: sku.trim() || null,
+        is_service: isService
       });
-      nav("/app", { replace: true });
+      nav("/app/items", { replace: true });
     } catch (e2) {
       setErr(e2.message || "Failed to create item.");
     } finally {
@@ -50,7 +52,7 @@ export default function ItemNew() {
     <div className="mx-auto max-w-3xl px-4 py-6">
       <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <h1 className="text-xl font-semibold">Add New Item</h1>
-        <Link to="/app" className="rounded-lg px-3 py-2 text-sm ring-1 ring-black/10 bg-white hover:bg-black/5 w-full sm:w-auto text-center">Cancel</Link>
+        <Link to="/app/items" className="rounded-lg px-3 py-2 text-sm ring-1 ring-black/10 bg-white hover:bg-black/5 w-full sm:w-auto text-center">Cancel</Link>
       </div>
 
       {err && (
@@ -104,8 +106,8 @@ export default function ItemNew() {
               <div>
                 <label className="block text-sm text-black/70 mb-1">Unit</label>
                 <select
-                  value={unit}
-                  onChange={(e) => setUnit(e.target.value)}
+                  value={unitOfMeasurement}
+                  onChange={(e) => setUnitOfMeasurement(e.target.value)}
                   className="w-full rounded-lg border border-black/10 px-3 py-2 bg-white text-sm sm:text-base"
                 >
                   <option value="each">Each</option>
@@ -115,22 +117,25 @@ export default function ItemNew() {
                   <option value="month">Month</option>
                   <option value="year">Year</option>
                   <option value="kg">Kilogram</option>
+                  <option value="lbs">Pounds</option>
                   <option value="meter">Meter</option>
+                  <option value="foot">Foot</option>
                   <option value="liter">Liter</option>
+                  <option value="gallon">Gallon</option>
                   <option value="piece">Piece</option>
                   <option value="box">Box</option>
-                  <option value="package">Package</option>
+                  <option value="pack">Pack</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm text-black/70 mb-1">Unit Price</label>
+                <label className="block text-sm text-black/70 mb-1">Default Price</label>
                 <input
                   type="number"
                   min="0"
                   step="0.01"
-                  value={unitPrice}
-                  onChange={(e) => setUnitPrice(e.target.value)}
+                  value={defaultPrice}
+                  onChange={(e) => setDefaultPrice(e.target.value)}
                   className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm sm:text-base"
                   placeholder="0.00"
                 />
@@ -158,11 +163,24 @@ export default function ItemNew() {
                 />
               </div>
             </div>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="isService"
+                checked={isService}
+                onChange={(e) => setIsService(e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="isService" className="ml-2 text-sm text-black/70">
+                This is a service (not a physical product)
+              </label>
+            </div>
           </div>
         </section>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
-          <Link to="/app" className="rounded-lg px-3 py-2 text-sm ring-1 ring-black/10 bg-white hover:bg-black/5 text-center">
+          <Link to="/app/items" className="rounded-lg px-3 py-2 text-sm ring-1 ring-black/10 bg-white hover:bg-black/5 text-center">
             Cancel
           </Link>
           <button

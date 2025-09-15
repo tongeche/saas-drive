@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import ReactDOM from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import supabase from "../lib/supabase";
+import { ThemeToggleMini } from "./ThemeToggle.jsx";
 
 const SECTION_LINKS = [
   { label: "Home", id: "home", to: "/#home", type: "hash" },
@@ -29,7 +30,7 @@ function MobileDrawer({ open, onClose, loggedIn, onLogout }) {
       <div
         className={`
           absolute inset-y-0 left-0 z-[10001] w-80 max-w-[85vw]
-          bg-white border-r shadow-[0_10px_30px_rgba(0,0,0,0.20)]
+          bg-white dark:bg-gray-800 border-r dark:border-gray-700 shadow-[0_10px_30px_rgba(0,0,0,0.20)]
           transform transition-transform duration-300 ease-out
           ${open ? "translate-x-0" : "-translate-x-full"}
         `}
@@ -37,14 +38,14 @@ function MobileDrawer({ open, onClose, loggedIn, onLogout }) {
         aria-modal="true"
       >
         {/* Drawer header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b bg-white">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <div className="flex items-center gap-2">
             <span className="inline-block h-3 w-3 rounded-full bg-finovo" />
-            <span className="font-semibold">Finovo</span>
+            <span className="font-semibold text-gray-900 dark:text-white">Finovo</span>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-md hover:bg-gray-100"
+            className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
             aria-label="Close"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -61,7 +62,7 @@ function MobileDrawer({ open, onClose, loggedIn, onLogout }) {
                 <Link
                   to={link.to}
                   onClick={onClose}
-                  className="block px-2 py-2 rounded-md hover:bg-gray-50"
+                  className="block px-2 py-2 rounded-md dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   {link.label}
                 </Link>
@@ -81,7 +82,14 @@ function MobileDrawer({ open, onClose, loggedIn, onLogout }) {
           </ul>
 
           {/* Divider */}
-          <div className="my-5 h-px bg-gray-200" />
+          <div className="my-5 h-px bg-gray-200 dark:bg-gray-700" />
+
+          {/* Theme Toggle for mobile */}
+          <div className="mb-4">
+            <div className="bg-gray-100 dark:bg-gray-700 rounded-xl p-2 w-fit mx-auto">
+              <ThemeToggleMini />
+            </div>
+          </div>
 
           {/* Auth + CTA */}
           {!loggedIn ? (
@@ -89,14 +97,14 @@ function MobileDrawer({ open, onClose, loggedIn, onLogout }) {
               <Link
                 to="/login"
                 onClick={onClose}
-                className="block w-full text-center px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-50"
+                className="block w-full text-center px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Log In
               </Link>
               <Link
                 to="/register"
                 onClick={onClose}
-                className="block w-full text-center px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-50"
+                className="block w-full text-center px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Sign Up
               </Link>
@@ -190,7 +198,7 @@ export default function SiteHeader() {
 
   const navLinkClass = (isActive) =>
     `px-3 py-2 rounded-md transition-colors ${
-      isActive ? "text-finovo font-semibold" : "text-gray-700 hover:text-finovo"
+      isActive ? "text-finovo font-semibold" : "text-gray-700 dark:text-gray-300 hover:text-finovo"
     }`;
 
   const handleLogout = async () => {
@@ -201,16 +209,16 @@ export default function SiteHeader() {
   return (
     <header
       className={
-        `sticky top-0 z-50 border-b border-gray-200
-         ${mobileOpen ? "bg-[#26BA99]" : "bg-white/90"}
-         md:bg-white/90 backdrop-blur`
+        `sticky top-0 z-50 border-b border-gray-200 dark:border-gray-700
+         ${mobileOpen ? "bg-[#26BA99]" : "bg-white/90 dark:bg-gray-900/90"}
+         md:bg-white/90 md:dark:bg-gray-900/90 backdrop-blur`
       }
     >
       <nav className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center space-x-2">
           <Link to="/#home" className="flex items-center">
-            <span className="text-2xl font-extrabold tracking-tight text-gray-900">
+            <span className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">
               Finovo
             </span>
           </Link>
@@ -240,17 +248,22 @@ export default function SiteHeader() {
 
         {/* Right actions */}
         <div className="flex items-center gap-4">
+          {/* Theme Toggle - visible for all users */}
+          <div className="bg-white/70 dark:bg-gray-800/70 rounded-xl p-1 shadow-sm ring-1 ring-black/5 dark:ring-gray-700">
+            <ThemeToggleMini />
+          </div>
+          
           {!loggedIn ? (
             <>
               <Link
                 to="/login"
-                className="hidden md:inline-block text-sm font-medium text-gray-700 hover:text-finovo"
+                className="hidden md:inline-block text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-finovo"
               >
                 Log In
               </Link>
               <Link
                 to="/register"
-                className="hidden md:inline-block text-sm font-medium text-gray-700 hover:text-finovo"
+                className="hidden md:inline-block text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-finovo"
               >
                 Sign Up
               </Link>
@@ -265,13 +278,13 @@ export default function SiteHeader() {
             <>
               <Link
                 to="/app"
-                className="hidden md:inline-block text-sm font-medium text-gray-700 hover:text-finovo"
+                className="hidden md:inline-block text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-finovo"
               >
                 Dashboard
               </Link>
               <button
                 onClick={handleLogout}
-                className="hidden md:inline-block text-sm font-medium px-4 py-2 rounded-md bg-gray-900 text-white hover:opacity-90"
+                className="hidden md:inline-block text-sm font-medium px-4 py-2 rounded-md bg-gray-900 dark:bg-gray-700 text-white hover:opacity-90"
               >
                 Logout
               </button>

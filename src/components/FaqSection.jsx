@@ -2,9 +2,7 @@
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
-/** Finovo-styled accordion FAQ */
 export default function FaqSection() {
-  // allow multiple items open; store keys like "group-idx:item-idx"
   const [open, setOpen] = useState(() => new Set());
 
   const groups = useMemo(
@@ -18,7 +16,7 @@ export default function FaqSection() {
           },
           {
             q: "Why use Finovo instead of spreadsheets?",
-            a: "Because spreadsheets don’t chase payments, remind clients, or reconcile in real time. Finovo automates busywork so you spend time on product, not paperwork.",
+            a: "Because spreadsheets don't chase payments, remind clients, or reconcile in real time. Finovo automates busywork so you spend time on product, not paperwork.",
           },
           {
             q: "Who is Finovo for?",
@@ -39,11 +37,11 @@ export default function FaqSection() {
           },
           {
             q: "Does Finovo integrate with accounting tools?",
-            a: "Yes. Finovo exports clean data and connects to common bookkeeping stacks. If you’re on Xero/QuickBooks, syncing takes minutes.",
+            a: "Yes. Finovo exports clean data and connects to common bookkeeping stacks. If you're on Xero/QuickBooks, syncing takes minutes.",
           },
           {
             q: "Is there an API?",
-            a: "We’re shipping a public API soon. Webhooks and CSV exports are already available for most workflows.",
+            a: "We're shipping a public API soon. Webhooks and CSV exports are already available for most workflows.",
           },
         ],
       },
@@ -60,7 +58,7 @@ export default function FaqSection() {
           },
           {
             q: "Do you offer discounts for startups or nonprofits?",
-            a: "We do. Early-stage and nonprofit discounts are available—book a quick demo and we’ll set you up.",
+            a: "We do. Early-stage and nonprofit discounts are available—book a quick demo and we'll set you up.",
           },
         ],
       },
@@ -93,36 +91,33 @@ export default function FaqSection() {
     });
 
   return (
-    <section id="faq" className="bg-gray-50 py-20 px-4 sm:px-6 lg:px-8">
+    <section id="faq" className="bg-gray-50 dark:bg-gray-900 py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-12">
-         
-          <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-gray-900">
+          <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white">
             We know you have questions.
           </h2>
-          <p className="mt-3 text-gray-600">
+          <p className="mt-3 text-gray-600 dark:text-gray-300">
             Straight answers to the most common questions founders ask about a
             financial SaaS. No fluff, just clarity.
           </p>
         </div>
 
-        {/* Groups */}
         <div className="space-y-12">
           {groups.map((group, gi) => (
             <div key={group.title}>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                 {group.title}
               </h3>
 
               <ul className="space-y-3">
                 {group.items.map((item, ii) => {
-                  const key = `${gi}:${ii}`;
+                  const key = "group-" + gi + ":item-" + ii;
                   const isOpen = open.has(key);
-                  const panelId = `faq-panel-${gi}-${ii}`;
-                  const btnId = `faq-btn-${gi}-${ii}`;
+                  const panelId = "faq-panel-" + gi + "-" + ii;
+                  const btnId = "faq-btn-" + gi + "-" + ii;
                   return (
-                    <li key={key} className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <li key={key} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
                       <button
                         id={btnId}
                         aria-controls={panelId}
@@ -130,16 +125,15 @@ export default function FaqSection() {
                         onClick={() => toggle(key)}
                         className="w-full flex items-center justify-between text-left px-4 py-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-finovo/60 rounded-lg"
                       >
-                        <span className="font-medium text-gray-900">
+                        <span className="font-medium text-gray-900 dark:text-white">
                           {item.q}
                         </span>
                         <span
-                          className={`ml-4 inline-flex h-8 w-8 items-center justify-center rounded-full transition-transform ${
+                          className={"ml-4 inline-flex h-8 w-8 items-center justify-center rounded-full transition-transform " + (
                             isOpen ? "rotate-45 bg-finovo text-white" : "bg-finovo text-white"
-                          }`}
+                          )}
                           aria-hidden="true"
                         >
-                          {/* plus icon; rotates to create a minus when open */}
                           <svg
                             viewBox="0 0 24 24"
                             fill="none"
@@ -158,9 +152,9 @@ export default function FaqSection() {
                         id={panelId}
                         role="region"
                         aria-labelledby={btnId}
-                        className={`px-4 pt-0 pb-4 text-gray-700 transition-[max-height,opacity] duration-200 ease-out ${
+                        className={"px-4 pt-0 pb-4 text-gray-700 dark:text-gray-300 transition-[max-height,opacity] duration-200 ease-out " + (
                           isOpen ? "opacity-100" : "opacity-0 max-h-0 overflow-hidden"
-                        }`}
+                        )}
                       >
                         <p className="leading-relaxed">{item.a}</p>
                       </div>
@@ -172,11 +166,10 @@ export default function FaqSection() {
           ))}
         </div>
 
-        {/* Help CTA */}
-        <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white px-5 py-4">
-          <p className="text-gray-700">
-            Didn’t find what you need?{" "}
-            <span className="font-medium">We’ll walk you through it live.</span>
+        <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-5 py-4">
+          <p className="text-gray-700 dark:text-gray-300">
+            Didn't find what you need?{" "}
+            <span className="font-medium">We'll walk you through it live.</span>
           </p>
           <div className="flex gap-3">
             <Link
@@ -185,7 +178,6 @@ export default function FaqSection() {
             >
               Book a demo
             </Link>
-          
           </div>
         </div>
       </div>

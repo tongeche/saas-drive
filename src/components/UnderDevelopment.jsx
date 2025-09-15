@@ -206,7 +206,7 @@ export default function UnderDevelopment({
           <div className="flex items-center justify-between h-16">
             <Link 
               to={backLink}
-              className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-white transition-colors"
             >
               <FontAwesomeIcon icon={faArrowLeft} className="w-4 h-4" />
               <span>Back to Dashboard</span>
@@ -225,7 +225,7 @@ export default function UnderDevelopment({
           <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 ${colorClasses.bgLight}`}>
             <FontAwesomeIcon icon={config.icon} className={`w-10 h-10 ${colorClasses.text}`} />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
             {config.title}
           </h1>
           <p className="text-xl text-gray-600 mb-8">
@@ -239,7 +239,7 @@ export default function UnderDevelopment({
         {/* Countdown Timer */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
               Estimated Launch Time
             </h2>
             <p className="text-gray-600">
@@ -277,7 +277,7 @@ export default function UnderDevelopment({
 
         {/* Features Preview */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
-          <h3 className="text-xl font-semibold text-gray-900 mb-6 text-center">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 text-center">
             What's Coming
           </h3>
           <div className="grid md:grid-cols-2 gap-4">
@@ -295,7 +295,7 @@ export default function UnderDevelopment({
           {!isSubscribed ? (
             <>
               <FontAwesomeIcon icon={faBell} className={`w-12 h-12 ${colorClasses.text} mb-4`} />
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                 Get Notified When It's Ready
               </h3>
               <p className="text-gray-600 mb-6">
@@ -324,7 +324,7 @@ export default function UnderDevelopment({
           ) : (
             <>
               <FontAwesomeIcon icon={faCheck} className="w-12 h-12 text-green-600 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                 You're All Set!
               </h3>
               <p className="text-gray-600">

@@ -34,11 +34,11 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-finovo-light/40">
+    <div className="min-h-screen bg-finovo-light/40 dark:bg-gray-900">
       <SiteHeader />
 
       <div className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 rounded-3xl overflow-hidden shadow-2xl bg-white/80 backdrop-blur">
+        <div className="grid grid-cols-1 md:grid-cols-2 rounded-3xl overflow-hidden shadow-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur">
           {/* LEFT: Form */}
           <div className="p-8 md:p-10 lg:p-12">
             {/* Brand */}
@@ -50,7 +50,7 @@ export default function Login() {
             <h1 className="text-3xl font-bold text-finovo text-center mb-4">
               Welcome Back!
             </h1>
-            <p className="text-gray-600 mt-1 mb-8 text-center">
+            <p className="text-gray-600 dark:text-gray-300 mt-1 mb-8 text-center">
               Let’s get you signed in securely.
             </p>
 
@@ -62,7 +62,7 @@ export default function Login() {
 
             <form className="space-y-5" onSubmit={onSubmit}>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Email
                 </label>
                 <input
@@ -72,12 +72,12 @@ export default function Login() {
                   required
                   placeholder="you@example.com"
                   autoComplete="email"
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-finovo focus:border-finovo"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-finovo focus:border-finovo"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Password
                 </label>
                 <div className="relative">
@@ -88,7 +88,7 @@ export default function Login() {
                     required
                     placeholder="••••••••"
                     autoComplete="current-password"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-finovo focus:border-finovo pr-10"
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-finovo focus:border-finovo pr-10"
                   />
                 </div>
               </div>
@@ -102,7 +102,7 @@ export default function Login() {
               </button>
             </form>
 
-            <p className="text-center text-sm text-gray-600 mt-6">
+            <p className="text-center text-sm text-gray-600 dark:text-gray-300 mt-6">
               Don’t have an account?{" "}
               <Link
                 to="/register"
@@ -112,7 +112,7 @@ export default function Login() {
               </Link>
             </p>
 
-            <p className="text-[10px] text-gray-400 mt-10">
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-10">
               &copy; Finovo {new Date().getFullYear()}
             </p>
           </div>
@@ -132,7 +132,7 @@ export default function Login() {
 
             {/* Quote card */}
             <div className="absolute bottom-6 left-6 right-6 md:left-8 md:right-8">
-              <div className="backdrop-blur bg-white/70 rounded-2xl shadow-xl px-4 py-3 md:px-5 md:py-4">
+              <div className="backdrop-blur bg-white/70 dark:bg-gray-800/70 rounded-2xl shadow-xl px-4 py-3 md:px-5 md:py-4">
                 <div className="flex items-center gap-3">
                   {(() => {
                     const reviewerImg = `${
@@ -143,7 +143,7 @@ export default function Login() {
                       <img
                         src={reviewerImg}
                         alt="Customer reviewer"
-                        className="h-10 w-10 rounded-full object-cover border border-gray-300 shadow-sm"
+                        className="h-10 w-10 rounded-full object-cover border border-gray-300 dark:border-gray-600 shadow-sm"
                         loading="lazy"
                         onError={(e) => {
                    
@@ -154,10 +154,10 @@ export default function Login() {
                   })()}
 
                   <div>
-                    <div className="text-sm font-semibold text-gray-800">
+                    <div className="text-sm font-semibold text-gray-800 dark:text-white">
                       Customer Spotlight
                     </div>
-                    <p className="text-xs text-gray-700">
+                    <p className="text-xs text-gray-700 dark:text-gray-300">
                       “Explore your numbers with clarity—Finovo keeps your books
                       neat, your cashflow visible, and your focus on growth.”
                     </p>

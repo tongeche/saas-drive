@@ -23,32 +23,32 @@ export default function InvoicePreview({ tenant, client, details, items, totals,
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div>
           <div className="font-medium">{tenant?.business_name}</div>
-          <div className="text-black/70 whitespace-pre-line">{tenant?.address}</div>
-          {tenant?.tax_id && <div className="text-black/70">Tax ID: {tenant.tax_id}</div>}
+          <div className="text-black/70 dark:text-gray-300 whitespace-pre-line">{tenant?.address}</div>
+          {tenant?.tax_id && <div className="text-black/70 dark:text-gray-300">Tax ID: {tenant.tax_id}</div>}
         </div>
         <div className="text-right">
           <div className="font-medium">{client?.name || "Client name"}</div>
-          {client?.email && <div className="text-black/70">{client.email}</div>}
-          {client?.phone && <div className="text-black/70">{client.phone}</div>}
+          {client?.email && <div className="text-black/70 dark:text-gray-300">{client.email}</div>}
+          {client?.phone && <div className="text-black/70 dark:text-gray-300">{client.phone}</div>}
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3 text-sm mt-4">
-        <div><span className="text-black/60">Issue:</span> {details.issueDate}</div>
-        <div><span className="text-black/60">Due:</span> {details.dueDate}</div>
-        <div className="text-right"><span className="text-black/60">Currency:</span> {details.currency}</div>
+        <div><span className="text-black/60 dark:text-gray-400">Issue:</span> {details.issueDate}</div>
+        <div><span className="text-black/60 dark:text-gray-400">Due:</span> {details.dueDate}</div>
+        <div className="text-right"><span className="text-black/60 dark:text-gray-400">Currency:</span> {details.currency}</div>
       </div>
 
       {(details.poNumber) && (
         <div className="mt-2 text-sm">
-          <span className="text-black/60">PO:</span> {details.poNumber}
+          <span className="text-black/60 dark:text-gray-400">PO:</span> {details.poNumber}
         </div>
       )}
 
       <div className="mt-4">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-black/60 border-b border-black/10">
+            <tr className="text-left text-black/60 dark:text-gray-400 border-b border-black/10">
               <th className="py-2">Description</th>
               <th className="py-2 text-right">Qty</th>
               <th className="py-2 text-right">Price</th>
@@ -63,7 +63,7 @@ export default function InvoicePreview({ tenant, client, details, items, totals,
               const tot  = line+tax;
               return (
                 <tr key={r.id} className="border-b border-black/5">
-                  <td className="py-2">{r.description || <span className="text-black/40">Item</span>}</td>
+                  <td className="py-2">{r.description || <span className="text-black/40 dark:text-gray-500">Item</span>}</td>
                   <td className="py-2 text-right">{r.qty||0}</td>
                   <td className="py-2 text-right">{fmt(r.price)}</td>
                   <td className="py-2 text-right">{r.tax||0}</td>
@@ -76,11 +76,11 @@ export default function InvoicePreview({ tenant, client, details, items, totals,
 
         <div className="mt-4 flex flex-col gap-1 text-sm">
           <div className="flex justify-end gap-8">
-            <div className="text-black/60">Subtotal</div>
+            <div className="text-black/60 dark:text-gray-400">Subtotal</div>
             <div>{fmt(totals.subtotal)}</div>
           </div>
           <div className="flex justify-end gap-8">
-            <div className="text-black/60">Tax</div>
+            <div className="text-black/60 dark:text-gray-400">Tax</div>
             <div>{fmt(totals.tax)}</div>
           </div>
           <div className="flex justify-end gap-8 text-base font-semibold" style={{color:brand}}>
@@ -90,7 +90,7 @@ export default function InvoicePreview({ tenant, client, details, items, totals,
         </div>
 
         {(notes.note || notes.terms || tenant?.pdf_footer) && (
-          <div className="mt-5 border-t border-black/10 pt-3 text-sm text-black/70 space-y-2">
+          <div className="mt-5 border-t border-black/10 pt-3 text-sm text-black/70 dark:text-gray-300 space-y-2">
             {notes.note && <div>{notes.note}</div>}
             {notes.terms && <div><b>Terms: </b>{notes.terms}</div>}
             {tenant?.pdf_footer && <div className="whitespace-pre-line">{tenant.pdf_footer}</div>}

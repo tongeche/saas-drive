@@ -10,11 +10,12 @@ export async function createItem(tenant_id, itemData) {
     tenant_id,
     name: itemData.name || '',
     description: itemData.description || null,
-    unit: itemData.unit || 'each',
-    unit_price: Number(itemData.unit_price) || 0,
+    unit_of_measurement: itemData.unit_of_measurement || itemData.unit || 'each',
+    default_price: Number(itemData.default_price || itemData.unit_price) || 0,
     tax_rate: Number(itemData.tax_rate) || 0,
     category: itemData.category || null,
     sku: itemData.sku || null,
+    is_service: itemData.is_service || false,
     is_active: itemData.is_active !== undefined ? itemData.is_active : true
   };
   

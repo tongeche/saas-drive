@@ -59,15 +59,15 @@ function formatDate(d) {
 // Helper Components
 function Card({ title, subtitle, accent, icon, children }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-4">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm ring-1 ring-black/5 dark:ring-gray-700 p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-gray-50">
+          <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-700">
             <FontAwesomeIcon icon={icon} className={`w-4 h-4 ${accent}`} />
           </div>
           <div>
-            <div className="text-xs text-gray-500">{title}</div>
-            <div className="text-lg font-semibold">{children}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">{title}</div>
+            <div className="text-lg font-semibold dark:text-white">{children}</div>
             {subtitle && <div className={`text-xs ${accent}`}>{subtitle}</div>}
           </div>
         </div>
@@ -78,9 +78,9 @@ function Card({ title, subtitle, accent, icon, children }) {
 
 function Header({ title, count, children }) {
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-b border-black/5">
-      <h2 className="font-semibold text-gray-900">
-        {title} {count !== undefined && <span className="text-gray-500">({count})</span>}
+    <div className="flex items-center justify-between px-4 py-3 border-b border-black/5 dark:border-gray-700">
+      <h2 className="font-semibold text-gray-900 dark:text-white">
+        {title} {count !== undefined && <span className="text-gray-500 dark:text-gray-400">({count})</span>}
       </h2>
       {children}
     </div>
@@ -788,794 +788,298 @@ export default function Dashboard() {
   const getQuoteStatusBadge = (status) => {
     switch (status) {
       case 'Draft':
-        return { cls: 'bg-gray-100 text-gray-800', text: 'Draft' };
+        return { cls: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200', text: 'Draft' };
       case 'Sent':
-        return { cls: 'bg-blue-100 text-blue-800', text: 'Sent' };
+        return { cls: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300', text: 'Sent' };
       case 'Accepted':
-        return { cls: 'bg-green-100 text-green-800', text: 'Accepted' };
+        return { cls: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300', text: 'Accepted' };
       case 'Rejected':
-        return { cls: 'bg-red-100 text-red-800', text: 'Rejected' };
+        return { cls: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300', text: 'Rejected' };
       default:
-        return { cls: 'bg-gray-100 text-gray-800', text: status || 'Unknown' };
+        return { cls: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200', text: status || 'Unknown' };
     }
   };
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      {/* Enhanced KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 pb-6">
-        <Card title="Total Sales" subtitle="+12% MoM" accent="text-green-600" icon={faFileInvoice}>
-          {formatMoney(sum(invoices.map(i => i.total)), tenant?.currency)}
-        </Card>
-        <Card title="Business Revenue" subtitle={`Today: ${formatMoney(businessRevenue.today, tenant?.currency)}`} accent="text-emerald-600" icon={faChartLine}>
-          <div className="space-y-1">
-            <div className="text-xs text-gray-500">Yesterday: {formatMoney(businessRevenue.yesterday, tenant?.currency)}</div>
-            <div className="text-xs text-gray-500">This Month: {formatMoney(businessRevenue.thisMonth, tenant?.currency)}</div>
-          </div>
-        </Card>
-        <Card title="Quotations" subtitle={`${quotations.filter(q => ['Draft', 'Sent'].includes(q.status)).length} pending`} accent="text-orange-600" icon={faFileAlt}>
-          <div className="space-y-1">
-            <div className="text-lg font-semibold">{quotations.length}</div>
-            <div className="text-xs text-gray-500">
-              Accepted: {quotations.filter(q => q.status === 'Accepted').length} | 
-              Value: {formatMoney(sum(quotations.filter(q => q.status === 'Accepted').map(q => q.total)), tenant?.currency)}
+      {/* Essential KPI cards - minimal and focused */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-8">
+        {/* Money In */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm ring-1 ring-black/5 dark:ring-gray-700">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-xl bg-green-100 dark:bg-green-900/30">
+              <FontAwesomeIcon icon={faArrowUp} className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-gray-500 dark:text-gray-400">This Month</div>
+              <div className="text-xs text-green-600 dark:text-green-400">+12.5%</div>
             </div>
           </div>
-        </Card>
-        <Card title="Cashflow Balance" subtitle={`${cashflowTransactions.length} transactions`} accent={cashflowBalance >= 0 ? "text-green-600" : "text-red-600"} icon={faMoneyBillWave}>
-          {formatMoney(cashflowBalance, tenant?.currency)}
-        </Card>
-        <Card title="Active Quotes" subtitle={`${quotes.filter(q => ['Draft', 'Sent'].includes(q.status)).length} pending`} accent="text-blue-600" icon={faFileContract}>
-          {quotes.length}
-        </Card>
-        <Card title="Inventory Items" subtitle={`${items.filter(i => i.is_service).length} services`} accent="text-purple-600" icon={faBoxes}>
-          {items.length}
-        </Card>
-        <Card title="Active Clients" subtitle="Total registered" accent="text-indigo-600" icon={faBuilding}>
-          {clients.length}
-        </Card>
-      </div>
-
-      {/* Quick Actions & Alerts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
-        {/* Quick Actions */}
-        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <FontAwesomeIcon icon={faRocket} className="w-5 h-5 text-blue-600" />
-            Quick Actions
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            <Link 
-              to="/app/invoices/new" 
-              className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors"
-            >
-              <FontAwesomeIcon icon={faFileInvoice} className="w-4 h-4" />
-              <span className="text-sm font-medium">New Invoice</span>
-            </Link>
-            <Link 
-              to="/app/quotes/new" 
-              className="flex items-center gap-3 p-3 rounded-lg bg-green-50 hover:bg-green-100 text-green-700 transition-colors"
-            >
-              <FontAwesomeIcon icon={faFileContract} className="w-4 h-4" />
-              <span className="text-sm font-medium">New Quote</span>
-            </Link>
-            <Link 
-              to="/app/clients/new" 
-              className="flex items-center gap-3 p-3 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 transition-colors"
-            >
-              <FontAwesomeIcon icon={faUsers} className="w-4 h-4" />
-              <span className="text-sm font-medium">Add Client</span>
-            </Link>
-            <Link 
-              to="/app/cashflow/new" 
-              className="flex items-center gap-3 p-3 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-700 transition-colors"
-            >
-              <FontAwesomeIcon icon={faMoneyBillWave} className="w-4 h-4" />
-              <span className="text-sm font-medium">Log Income</span>
-            </Link>
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Money In</h3>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {formatMoney(businessRevenue.thisMonth, tenant?.currency)}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Today: {formatMoney(businessRevenue.today, tenant?.currency)}
+            </div>
           </div>
         </div>
 
-        {/* Business Health Alerts */}
-        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        {/* Money Out */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm ring-1 ring-black/5 dark:ring-gray-700">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-xl bg-red-100 dark:bg-red-900/30">
+              <FontAwesomeIcon icon={faArrowDown} className="w-6 h-6 text-red-600 dark:text-red-400" />
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-gray-500 dark:text-gray-400">Expenses</div>
+              <div className="text-xs text-red-600 dark:text-red-400">-8.2%</div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Money Out</h3>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {formatMoney(Math.abs(cashflowTransactions.filter(t => t.transaction_type === 'cash_out').reduce((sum, t) => sum + (t.amount || 0), 0)), tenant?.currency)}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Balance: {formatMoney(cashflowBalance, tenant?.currency)}
+            </div>
+          </div>
+        </div>
+
+        {/* Clients */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm ring-1 ring-black/5 dark:ring-gray-700">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900/30">
+              <FontAwesomeIcon icon={faUsers} className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <Link to="/app/clients" className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+              View All →
+            </Link>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Clients</h3>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {clients.length}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              {quickStats.overdueInvoices > 0 ? `${quickStats.overdueInvoices} need attention` : 'All up to date'}
+            </div>
+          </div>
+        </div>
+
+        {/* Business Assets */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm ring-1 ring-black/5 dark:ring-gray-700">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-xl bg-purple-100 dark:bg-purple-900/30">
+              <FontAwesomeIcon icon={faBoxes} className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            </div>
+            <Link to="/app/inventory" className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300">
+              Manage →
+            </Link>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Assets</h3>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {items.length}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              {items.filter(i => i.is_service).length} services, {items.filter(i => !i.is_service).length} products
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Business Health Alerts - Only show important alerts */}
+      {(quickStats.overdueInvoices > 0 || quickStats.upcomingPayments > 0) && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm ring-1 ring-black/5 dark:ring-gray-700 p-6 mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <FontAwesomeIcon icon={faExclamationTriangle} className="w-5 h-5 text-amber-600" />
-            Business Health
+            Attention Required
           </h3>
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {quickStats.overdueInvoices > 0 && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 text-red-700">
-                <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300">
+                <FontAwesomeIcon icon={faExclamationTriangle} className="w-5 h-5" />
                 <div className="flex-1">
-                  <div className="text-sm font-medium">{quickStats.overdueInvoices} Overdue Invoice{quickStats.overdueInvoices > 1 ? 's' : ''}</div>
-                  <div className="text-xs">{formatMoney(quickStats.overdueAmount, tenant?.currency)} needs collection</div>
+                  <div className="font-medium">{quickStats.overdueInvoices} Overdue Invoice{quickStats.overdueInvoices > 1 ? 's' : ''}</div>
+                  <div className="text-sm">{formatMoney(quickStats.overdueAmount, tenant?.currency)} needs collection</div>
                 </div>
-                <Link to="/app/invoices" className="text-xs underline">View</Link>
+                <Link to="/app/invoices" className="text-sm underline">View →</Link>
               </div>
             )}
             {quickStats.upcomingPayments > 0 && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 text-amber-700">
-                <FontAwesomeIcon icon={faClock} className="w-4 h-4" />
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300">
+                <FontAwesomeIcon icon={faClock} className="w-5 h-5" />
                 <div className="flex-1">
-                  <div className="text-sm font-medium">{quickStats.upcomingPayments} Payment{quickStats.upcomingPayments > 1 ? 's' : ''} Due Soon</div>
-                  <div className="text-xs">Follow up recommended</div>
+                  <div className="font-medium">{quickStats.upcomingPayments} Payment{quickStats.upcomingPayments > 1 ? 's' : ''} Due Soon</div>
+                  <div className="text-sm">Follow up recommended</div>
                 </div>
-                <Link to="/app/invoices" className="text-xs underline">View</Link>
+                <Link to="/app/invoices" className="text-sm underline">View →</Link>
               </div>
             )}
-            {quickStats.overdueInvoices === 0 && quickStats.upcomingPayments === 0 && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 text-green-700">
-                <FontAwesomeIcon icon={faArrowUp} className="w-4 h-4" />
-                <div className="flex-1">
-                  <div className="text-sm font-medium">All Good!</div>
-                  <div className="text-xs">No urgent payment issues</div>
-                </div>
-              </div>
-            )}
-            <div className="pt-3 border-t border-gray-100">
-              <div className="text-xs text-gray-600 space-y-1">
-                <div>This Week Sales: <span className="font-medium text-gray-900">{formatMoney(quickStats.thisWeekSales, tenant?.currency)}</span></div>
-                <div>Average Invoice: <span className="font-medium text-gray-900">{formatMoney(quickStats.avgInvoiceValue, tenant?.currency)}</span></div>
-              </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Actions - Simplified */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-6 mb-8">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <FontAwesomeIcon icon={faRocket} className="w-5 h-5 text-blue-600" />
+          Quick Actions
+        </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Link 
+            to="/app/invoices/new" 
+            className="flex flex-col items-center gap-3 p-4 rounded-xl bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-blue-700 dark:text-blue-300 transition-colors shadow-sm"
+          >
+            <FontAwesomeIcon icon={faFileInvoice} className="w-8 h-8" />
+            <span className="font-medium">New Invoice</span>
+          </Link>
+          <Link 
+            to="/app/quotes/new" 
+            className="flex flex-col items-center gap-3 p-4 rounded-xl bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-green-700 dark:text-green-300 transition-colors shadow-sm"
+          >
+            <FontAwesomeIcon icon={faFileContract} className="w-8 h-8" />
+            <span className="font-medium">New Quote</span>
+          </Link>
+          <Link 
+            to="/app/clients/new" 
+            className="flex flex-col items-center gap-3 p-4 rounded-xl bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-purple-700 dark:text-purple-300 transition-colors shadow-sm"
+          >
+            <FontAwesomeIcon icon={faUsers} className="w-8 h-8" />
+            <span className="font-medium">Add Client</span>
+          </Link>
+          <Link 
+            to="/app/cashflow/new" 
+            className="flex flex-col items-center gap-3 p-4 rounded-xl bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-orange-700 dark:text-orange-300 transition-colors shadow-sm"
+          >
+            <FontAwesomeIcon icon={faMoneyBillWave} className="w-8 h-8" />
+            <span className="font-medium">Log Transaction</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* Business Insights - Simplified with links to detailed pages */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm ring-1 ring-black/5 dark:ring-gray-700 p-6 mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Business Insights</h3>
+          <Link 
+            to="/app/business/analytics" 
+            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+          >
+            View Full Analytics →
+          </Link>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {/* Performance Summary */}
+          <div className="text-center p-4 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
+            <FontAwesomeIcon icon={faChartLine} className="w-8 h-8 text-green-600 dark:text-green-400 mb-3" />
+            <div className="text-2xl font-bold text-green-700 dark:text-green-300">
+              {businessRevenue.thisMonth > businessRevenue.yesterday * 30 ? '+' : '-'}
+              {Math.abs(((businessRevenue.thisMonth - (businessRevenue.yesterday * 30)) / (businessRevenue.yesterday * 30) * 100) || 0).toFixed(1)}%
             </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Monthly Growth</div>
+            <Link to="/app/business/analytics" className="text-xs text-green-600 dark:text-green-400 hover:underline">
+              View trends →
+            </Link>
+          </div>
+
+          {/* Customer Health */}
+          <div className="text-center p-4 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+            <FontAwesomeIcon icon={faUsers} className="w-8 h-8 text-blue-600 dark:text-blue-400 mb-3" />
+            <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+              {Math.round(((clients.length - quickStats.overdueInvoices) / Math.max(clients.length, 1)) * 100)}%
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Healthy Clients</div>
+            <Link to="/app/crm" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+              Manage clients →
+            </Link>
+          </div>
+
+          {/* Business Efficiency */}
+          <div className="text-center p-4 rounded-xl bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
+            <FontAwesomeIcon icon={faTrophy} className="w-8 h-8 text-purple-600 dark:text-purple-400 mb-3" />
+            <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+              {formatMoney(quickStats.avgInvoiceValue, tenant?.currency)}
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Avg Invoice Value</div>
+            <Link to="/app/reports" className="text-xs text-purple-600 dark:text-purple-400 hover:underline">
+              View reports →
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Business Intelligence Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-6">
-        {/* Best Performing Products/Services */}
-        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <FontAwesomeIcon icon={faTrophy} className="w-5 h-5 text-yellow-600" />
-            Top Performers
-          </h3>
-          <div className="space-y-3">
-            {(businessInsights.bestPerformingItems || []).length === 0 ? (
-              <div className="text-center text-gray-500 py-4">
-                <FontAwesomeIcon icon={faStar} className="w-8 h-8 text-gray-300 mb-2" />
-                <p className="text-sm">Add items to see performance insights</p>
-              </div>
-            ) : (
-              (businessInsights.bestPerformingItems || []).map((item, index) => (
-                <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-yellow-50 to-orange-50">
-                  <div className="flex-shrink-0">
-                    <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold
-                      ${index === 0 ? 'bg-yellow-500 text-white' : 
-                        index === 1 ? 'bg-gray-400 text-white' : 
-                        index === 2 ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
-                      {index + 1}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm truncate">{item.name}</div>
-                    <div className="text-xs text-gray-600">
-                      {item.salesCount} sales • {item.category}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-semibold text-sm text-green-600">
-                      {formatMoney(item.totalRevenue, tenant?.currency)}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {(item.profitMargin * 100).toFixed(1)}% margin
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Customer Payment Behavior */}
-        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <FontAwesomeIcon icon={faShieldAlt} className="w-5 h-5 text-blue-600" />
-            Customer Insights
-          </h3>
-          <div className="space-y-3">
-            <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="p-2 rounded bg-green-50">
-                <div className="font-semibold text-green-600">
-                  {(businessInsights.customerPaymentBehavior || []).filter(c => c.riskLevel === 'Low').length}
-                </div>
-                <div className="text-green-700">Low Risk</div>
-              </div>
-              <div className="p-2 rounded bg-yellow-50">
-                <div className="font-semibold text-yellow-600">
-                  {(businessInsights.customerPaymentBehavior || []).filter(c => c.riskLevel === 'Medium').length}
-                </div>
-                <div className="text-yellow-700">Medium Risk</div>
-              </div>
-              <div className="p-2 rounded bg-red-50">
-                <div className="font-semibold text-red-600">
-                  {(businessInsights.customerPaymentBehavior || []).filter(c => c.riskLevel === 'High').length}
-                </div>
-                <div className="text-red-700">High Risk</div>
-              </div>
-            </div>
-            
-            {(businessInsights.customerPaymentBehavior || []).length === 0 ? (
-              <div className="text-center text-gray-500 py-4">
-                <FontAwesomeIcon icon={faUsers} className="w-8 h-8 text-gray-300 mb-2" />
-                <p className="text-sm">Create invoices to see customer insights</p>
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {(businessInsights.customerPaymentBehavior || [])
-                  .sort((a, b) => b.totalAmount - a.totalAmount)
-                  .slice(0, 5)
-                  .map(customer => (
-                    <div key={customer.clientId} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50">
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm truncate">{customer.clientName}</div>
-                        <div className="text-xs text-gray-600">
-                          {customer.totalInvoices} invoices • {formatMoney(customer.totalAmount, tenant?.currency)}
-                        </div>
-                      </div>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                        ${customer.riskLevel === 'Low' ? 'bg-green-100 text-green-800' :
-                          customer.riskLevel === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'}`}>
-                        {customer.riskLevel}
-                      </span>
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Seasonal Patterns & Trends */}
-        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <FontAwesomeIcon icon={faCalendarAlt} className="w-5 h-5 text-purple-600" />
-            Business Trends
-          </h3>
-          <div className="space-y-4">
-            {/* Growth Indicator */}
-            <div className={`p-3 rounded-lg ${(businessInsights.trends || {}).isGrowthTrend ? 'bg-green-50' : 'bg-red-50'}`}>
-              <div className="flex items-center gap-2">
-                <FontAwesomeIcon 
-                  icon={(businessInsights.trends || {}).isGrowthTrend ? faChartLine : faArrowDown} 
-                  className={`w-4 h-4 ${(businessInsights.trends || {}).isGrowthTrend ? 'text-green-600' : 'text-red-600'}`} 
-                />
-                <span className={`text-sm font-medium ${(businessInsights.trends || {}).isGrowthTrend ? 'text-green-700' : 'text-red-700'}`}>
-                  {(businessInsights.trends || {}).isGrowthTrend ? 'Growing Trend' : 'Declining Trend'}
-                </span>
-              </div>
-              <div className="text-xs text-gray-600 mt-1">
-                Based on last 3 months performance
-              </div>
-            </div>
-
-            {/* Key Metrics */}
-            <div className="space-y-3">
-              <div>
-                <div className="text-xs text-gray-500">Average Monthly Revenue</div>
-                <div className="font-semibold text-lg">
-                  {formatMoney((businessInsights.trends || {}).avgMonthlyRevenue || 0, tenant?.currency)}
-                </div>
-              </div>
-              
-              {(businessInsights.trends || {}).bestMonth && (
-                <div>
-                  <div className="text-xs text-gray-500">Best Month</div>
-                  <div className="font-medium text-sm text-green-600">
-                    {(businessInsights.trends || {}).bestMonth[1]?.month} - {formatMoney((businessInsights.trends || {}).bestMonth[1]?.revenue || 0, tenant?.currency)}
-                  </div>
-                </div>
-              )}
-              
-              <div className="pt-2 border-t border-gray-100">
-                <div className="flex justify-between text-xs">
-                  <span className="text-gray-500">Total Customers:</span>
-                  <span className="font-medium">{(businessInsights.trends || {}).totalCustomers || 0}</span>
-                </div>
-                <div className="flex justify-between text-xs mt-1">
-                  <span className="text-gray-500">High Risk:</span>
-                  <span className="font-medium text-red-600">{(businessInsights.trends || {}).highRiskCustomers || 0}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Customer Relationship Management Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-6">
-        {/* Customer Communication History */}
-        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <FontAwesomeIcon icon={faComments} className="w-5 h-5 text-blue-600" />
-            Communication History
-          </h3>
-          <div className="space-y-3">
-            {(businessInsights.customerCommunication || []).length === 0 ? (
-              <div className="text-center text-gray-500 py-4">
-                <FontAwesomeIcon icon={faComments} className="w-8 h-8 text-gray-300 mb-2" />
-                <p className="text-sm">No communication history yet</p>
-              </div>
-            ) : (
-              (businessInsights.customerCommunication || []).slice(0, 5).map(comm => (
-                <div key={comm.clientId} className="border rounded-lg p-3 hover:bg-gray-50">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="font-medium text-sm">{comm.clientName}</div>
-                    <div className="flex items-center gap-2">
-                      {comm.email && (
-                        <FontAwesomeIcon icon={faEnvelope} className="w-3 h-3 text-gray-400" />
-                      )}
-                      {comm.phone && (
-                        <FontAwesomeIcon icon={faPhone} className="w-3 h-3 text-gray-400" />
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-600 space-y-1">
-                    <div>Last Contact: {new Date(comm.lastContact).toLocaleDateString()}</div>
-                    <div className="flex justify-between">
-                      <span>Invoices: {comm.totalInvoices}</span>
-                      {comm.overdueCount > 0 && (
-                        <span className="text-red-600 font-medium">
-                          {comm.overdueCount} overdue
-                        </span>
-                      )}
-                    </div>
-                    {comm.communicationHistory[0] && (
-                      <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
-                        <FontAwesomeIcon 
-                          icon={comm.communicationHistory[0].method === 'email' ? faEnvelope : faPhone} 
-                          className="w-3 h-3 text-blue-500" 
-                        />
-                        <span className="text-xs">{comm.communicationHistory[0].notes}</span>
-                      </div>
-                    )}
-                    <div className="text-xs text-amber-600">
-                      Next action: {new Date(comm.nextActionDue).toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Payment Reminders Automation */}
-        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <FontAwesomeIcon icon={faBell} className="w-5 h-5 text-amber-600" />
-            Payment Reminders
-          </h3>
-          <div className="space-y-3">
-            {(businessInsights.paymentReminders || []).length === 0 ? (
-              <div className="text-center text-gray-500 py-4">
-                <FontAwesomeIcon icon={faBell} className="w-8 h-8 text-gray-300 mb-2" />
-                <p className="text-sm">All payments up to date!</p>
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {(businessInsights.paymentReminders || []).map(reminder => (
-                  <div key={reminder.invoiceId} className={`border rounded-lg p-3 
-                    ${reminder.urgencyLevel === 'high' ? 'border-red-200 bg-red-50' :
-                      reminder.urgencyLevel === 'medium' ? 'border-yellow-200 bg-yellow-50' :
-                      'border-gray-200 bg-gray-50'}`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="font-medium text-sm">{reminder.clientName}</div>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                        ${reminder.urgencyLevel === 'high' ? 'bg-red-100 text-red-800' :
-                          reminder.urgencyLevel === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-blue-100 text-blue-800'}`}>
-                        {reminder.urgencyLevel} priority
-                      </span>
-                    </div>
-                    <div className="text-xs text-gray-600 space-y-1">
-                      <div className="flex justify-between">
-                        <span>Invoice: {reminder.invoiceNumber}</span>
-                        <span className="font-medium">{formatMoney(reminder.amount, tenant?.currency)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Days overdue: {reminder.daysPastDue}</span>
-                        <span>Reminders sent: {reminder.remindersSent}</span>
-                      </div>
-                      <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
-                        <div className={`w-2 h-2 rounded-full ${reminder.autoReminderEnabled ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                        <span className="text-xs">Auto-reminder: {reminder.autoReminderEnabled ? 'ON' : 'OFF'}</span>
-                      </div>
-                      <div className="text-xs text-blue-600">
-                        Next reminder: {new Date(reminder.nextReminderDue).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Customer Credit Limit Tracking */}
-        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <FontAwesomeIcon icon={faUserCheck} className="w-5 h-5 text-green-600" />
-            Credit Limits
-          </h3>
-          <div className="space-y-3">
-            {(businessInsights.creditLimits || []).length === 0 ? (
-              <div className="text-center text-gray-500 py-4">
-                <FontAwesomeIcon icon={faUserCheck} className="w-8 h-8 text-gray-300 mb-2" />
-                <p className="text-sm">No credit limits set</p>
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {(businessInsights.creditLimits || []).map(credit => (
-                  <div key={credit.clientId} className="border rounded-lg p-3 hover:bg-gray-50">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="font-medium text-sm truncate">{credit.clientName}</div>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                        ${credit.recommendedAction === 'credit_review' ? 'bg-red-100 text-red-800' :
-                          credit.recommendedAction === 'monitor' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-green-100 text-green-800'}`}>
-                        {credit.riskLevel}
-                      </span>
-                    </div>
-                    
-                    {/* Credit Utilization Bar */}
-                    <div className="mb-2">
-                      <div className="flex justify-between text-xs text-gray-600 mb-1">
-                        <span>Credit Utilization</span>
-                        <span>{credit.utilizationRate.toFixed(1)}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className={`h-2 rounded-full ${
-                            credit.utilizationRate > 90 ? 'bg-red-500' :
-                            credit.utilizationRate > 80 ? 'bg-yellow-500' :
-                            'bg-green-500'
-                          }`}
-                          style={{ width: `${Math.min(100, credit.utilizationRate)}%` }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    <div className="text-xs text-gray-600 space-y-1">
-                      <div className="flex justify-between">
-                        <span>Credit Limit:</span>
-                        <span className="font-medium">{formatMoney(credit.currentCreditLimit, tenant?.currency)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Used:</span>
-                        <span className="font-medium">{formatMoney(credit.utilizedCredit, tenant?.currency)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Available:</span>
-                        <span className="font-medium text-green-600">{formatMoney(credit.availableCredit, tenant?.currency)}</span>
-                      </div>
-                      
-                      {credit.recommendedAction !== 'none' && (
-                        <div className="pt-1 border-t border-gray-100">
-                          <div className={`text-xs font-medium ${
-                            credit.recommendedAction === 'credit_review' ? 'text-red-600' : 'text-yellow-600'
-                          }`}>
-                            Action: {credit.recommendedAction === 'credit_review' ? 'Review Required' : 'Monitor Closely'}
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="flex items-center gap-2 pt-1">
-                        <div className={`w-2 h-2 rounded-full ${credit.autoLimitAdjustment ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                        <span className="text-xs">Auto-adjust: {credit.autoLimitAdjustment ? 'ON' : 'OFF'}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Invoice Management & Automation Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-6">
-        {/* Template-based Invoice Creation */}
-        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <FontAwesomeIcon icon={faCopy} className="w-5 h-5 text-blue-600" />
-            Invoice Templates
-          </h3>
-          <div className="space-y-3">
-            {invoiceTemplates.length === 0 ? (
-              <div className="text-center text-gray-500 py-4">
-                <FontAwesomeIcon icon={faCopy} className="w-8 h-8 text-gray-300 mb-2" />
-                <p className="text-sm">No templates created yet</p>
-                <button className="mt-2 text-blue-600 text-sm hover:text-blue-700">
-                  Create Template
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {invoiceTemplates.map(template => (
-                  <div key={template.id} className="border rounded-lg p-3 hover:bg-gray-50">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="font-medium text-sm truncate">{template.name}</div>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                        ${template.category === 'Service' ? 'bg-blue-100 text-blue-800' :
-                          template.category === 'Subscription' ? 'bg-green-100 text-green-800' :
-                          'bg-purple-100 text-purple-800'}`}>
-                        {template.category}
-                      </span>
-                    </div>
-                    <div className="text-xs text-gray-600 mb-2">
-                      {template.description}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs text-gray-500">
-                        Used {template.usageCount} times
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button className="text-blue-600 hover:text-blue-700 text-xs">
-                          <FontAwesomeIcon icon={faCopy} className="w-3 h-3 mr-1" />
-                          Use
-                        </button>
-                        <button className="text-gray-600 hover:text-gray-700 text-xs">
-                          Edit
-                        </button>
-                      </div>
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      Last used: {template.lastUsed.toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="pt-3 border-t border-gray-100">
-              <button className="w-full text-center text-blue-600 hover:text-blue-700 text-sm font-medium">
-                <FontAwesomeIcon icon={faPlus} className="w-3 h-3 mr-1" />
-                Create New Template
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Recurring Invoice Automation */}
-        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <FontAwesomeIcon icon={faSync} className="w-5 h-5 text-green-600" />
-            Recurring Invoices
-          </h3>
-          <div className="space-y-3">
-            {recurringInvoices.length === 0 ? (
-              <div className="text-center text-gray-500 py-4">
-                <FontAwesomeIcon icon={faSync} className="w-8 h-8 text-gray-300 mb-2" />
-                <p className="text-sm">No recurring invoices set up</p>
-                <button className="mt-2 text-green-600 text-sm hover:text-green-700">
-                  Set Up Recurring
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {recurringInvoices.map(recurring => (
-                  <div key={recurring.id} className="border rounded-lg p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="font-medium text-sm truncate">{recurring.clientName}</div>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                        ${recurring.status === 'active' ? 'bg-green-100 text-green-800' :
-                          recurring.status === 'paused' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'}`}>
-                        {recurring.status}
-                      </span>
-                    </div>
-                    
-                    <div className="text-xs text-gray-600 space-y-1">
-                      <div className="flex justify-between">
-                        <span>Frequency:</span>
-                        <span className="font-medium capitalize">{recurring.frequency}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Amount:</span>
-                        <span className="font-medium">{formatMoney(recurring.totalAmount, recurring.currency)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Next Run:</span>
-                        <span className={`font-medium ${
-                          new Date(recurring.nextRunDate) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) ? 'text-orange-600' : 'text-gray-600'
-                        }`}>
-                          {recurring.nextRunDate.toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Generated:</span>
-                        <span className="font-medium">{recurring.totalGenerated} invoices</span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${recurring.autoSend ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                        <span className="text-xs">Auto-send: {recurring.autoSend ? 'ON' : 'OFF'}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button className="text-blue-600 hover:text-blue-700 text-xs">
-                          <FontAwesomeIcon icon={faEye} className="w-3 h-3" />
-                        </button>
-                        <button className="text-green-600 hover:text-green-700 text-xs">
-                          <FontAwesomeIcon icon={faCalendarCheck} className="w-3 h-3" />
-                        </button>
-                        <button className="text-gray-600 hover:text-gray-700 text-xs">
-                          Edit
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="pt-3 border-t border-gray-100">
-              <button className="w-full text-center text-green-600 hover:text-green-700 text-sm font-medium">
-                <FontAwesomeIcon icon={faPlus} className="w-3 h-3 mr-1" />
-                Set Up Recurring Invoice
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Bulk Operations for Common Tasks */}
-        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <FontAwesomeIcon icon={faLayerGroup} className="w-5 h-5 text-purple-600" />
-            Bulk Operations
-          </h3>
-          <div className="space-y-3">
-            {/* Quick Bulk Actions */}
-            <div className="grid grid-cols-2 gap-2">
-              <button className="flex items-center gap-2 p-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium">
-                <FontAwesomeIcon icon={faBell} className="w-3 h-3" />
-                <div className="text-left">
-                  <div>Send Reminders</div>
-                  <div className="text-xs text-blue-600">
-                    {(bulkOperations.availableCounts || {}).send_reminder || 0} ready
-                  </div>
-                </div>
-              </button>
-              
-              <button className="flex items-center gap-2 p-2 rounded-lg bg-green-50 hover:bg-green-100 text-green-700 text-xs font-medium">
-                <FontAwesomeIcon icon={faCheckSquare} className="w-3 h-3" />
-                <div className="text-left">
-                  <div>Mark Paid</div>
-                  <div className="text-xs text-green-600">
-                    {(bulkOperations.availableCounts || {}).mark_paid || 0} pending
-                  </div>
-                </div>
-              </button>
-              
-              <button className="flex items-center gap-2 p-2 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-medium">
-                <FontAwesomeIcon icon={faFileImport} className="w-3 h-3" />
-                <div className="text-left">
-                  <div>Export CSV</div>
-                  <div className="text-xs text-purple-600">
-                    {(bulkOperations.availableCounts || {}).export || 0} invoices
-                  </div>
-                </div>
-              </button>
-              
-              <button className="flex items-center gap-2 p-2 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-medium">
-                <FontAwesomeIcon icon={faFileInvoice} className="w-3 h-3" />
-                <div className="text-left">
-                  <div>Send Drafts</div>
-                  <div className="text-xs text-orange-600">
-                    {(bulkOperations.availableCounts || {}).send_bulk || 0} drafts
-                  </div>
-                </div>
-              </button>
-            </div>
-
-            {/* Recent Bulk Actions */}
-            <div className="pt-3 border-t border-gray-100">
-              <div className="text-sm font-medium text-gray-700 mb-2">Recent Actions</div>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {(bulkOperations.recentActions || []).length === 0 ? (
-                  <div className="text-center text-gray-500 py-2">
-                    <p className="text-xs">No recent bulk actions</p>
-                  </div>
-                ) : (
-                  (bulkOperations.recentActions || []).map(action => (
-                    <div key={action.id} className="flex items-center justify-between p-2 rounded-lg bg-gray-50">
-                      <div className="flex-1">
-                        <div className="text-xs font-medium">{action.description}</div>
-                        <div className="text-xs text-gray-600">
-                          {action.successCount}/{action.targetCount} completed
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs text-gray-500">
-                          {action.executedAt.toLocaleDateString()}
-                        </div>
-                        <div className={`text-xs ${action.executedBy === 'system_auto' ? 'text-blue-600' : 'text-gray-600'}`}>
-                          {action.executedBy === 'system_auto' ? 'Auto' : 'Manual'}
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-gray-100">
-              <button className="w-full text-center text-purple-600 hover:text-purple-700 text-sm font-medium">
-                <FontAwesomeIcon icon={faLayerGroup} className="w-3 h-3 mr-1" />
-                Advanced Bulk Actions
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main content grid - responsive layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-8">
-        {/* Recent Invoices - takes full width on mobile, 8 cols on desktop */}
-        <section className="lg:col-span-8 rounded-2xl bg-white shadow-sm ring-1 ring-black/5 overflow-hidden">
+      {/* Main content - Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Invoices - Main focus */}
+        <section className="lg:col-span-2 rounded-2xl bg-white dark:bg-gray-800 shadow-sm ring-1 ring-black/5 dark:ring-gray-700 overflow-hidden">
           <Header title="Recent Invoices" count={invoices.length}>
             <div className="flex items-center gap-2">
-              <Link to="/app/invoices" className="text-xs rounded-lg px-2 py-1 ring-1 ring-black/10 hover:bg-black/5 flex items-center gap-1">
+              <Link to="/app/invoices" className="text-xs rounded-lg px-3 py-2 ring-1 ring-black/10 hover:bg-black/5 flex items-center gap-1">
                 <FontAwesomeIcon icon={faEye} className="w-3 h-3" />
-                <span className="hidden sm:inline">View All</span>
+                View All
               </Link>
-              <Link to="/app/invoices/wizard" className="text-xs rounded-lg px-2 py-1 bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-1">
+              <Link to="/app/invoices/wizard" className="text-xs rounded-lg px-3 py-2 bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-1">
                 <FontAwesomeIcon icon={faPlus} className="w-3 h-3" />
-                <span className="hidden sm:inline">New Invoice</span>
+                Create
               </Link>
             </div>
           </Header>
 
-          {msg && <div className="px-4 py-2 text-xs text-black/70 bg-amber-50 border-t border-amber-200">{msg}</div>}
+          {msg && <div className="px-4 py-2 text-xs text-black/70 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 border-t border-amber-200 dark:border-amber-700">{msg}</div>}
 
           <div className="overflow-x-auto">
             {loading ? (
-              <div className="px-4 py-8 text-sm text-black/60 text-center">Loading…</div>
+              <div className="px-4 py-8 text-sm text-black/60 dark:text-gray-300 text-center">Loading…</div>
             ) : invoices.length === 0 ? (
-              <div className="px-4 py-8 text-sm text-black/60 text-center">
-                <FontAwesomeIcon icon={faFileInvoice} className="w-12 h-12 text-gray-300 mb-3" />
-                <p>No invoices yet.</p>
-                <Link to="/app/invoices/wizard" className="text-emerald-600 hover:text-emerald-700">Create your first invoice</Link>
+              <div className="px-4 py-12 text-center">
+                <FontAwesomeIcon icon={faFileInvoice} className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No invoices yet</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Get started by creating your first invoice</p>
+                <Link 
+                  to="/app/invoices/wizard" 
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                >
+                  <FontAwesomeIcon icon={faPlus} className="w-4 h-4" />
+                  Create Invoice
+                </Link>
               </div>
             ) : (
               <table className="min-w-full text-sm">
-                <thead className="bg-[#F3F4F6] text-black/60 hidden sm:table-header-group">
+                <thead className="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                   <tr>
-                    <th className="text-left px-4 py-2">Invoice #</th>
-                    <th className="text-left px-4 py-2">Client</th>
-                    <th className="text-left px-4 py-2">Issued</th>
-                    <th className="text-left px-4 py-2">Due</th>
-                    <th className="text-left px-4 py-2">Status</th>
-                    <th className="text-right px-4 py-2">Amount</th>
+                    <th className="text-left px-4 py-3 font-medium">Invoice</th>
+                    <th className="text-left px-4 py-3 font-medium">Client</th>
+                    <th className="text-left px-4 py-3 font-medium">Due Date</th>
+                    <th className="text-left px-4 py-3 font-medium">Status</th>
+                    <th className="text-right px-4 py-3 font-medium">Amount</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-black/5">
-                  {invoices.slice(0, 10).map((r) => {
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                  {invoices.slice(0, 8).map((r) => {
                     const status = statusOf(r);
                     const badge = statusBadge(status);
                     return (
-                      <tr key={r.id} className="sm:table-row flex flex-col sm:flex-row border-b sm:border-b-0 pb-4 sm:pb-0 mb-4 sm:mb-0">
-                        <td className="px-4 py-2 font-medium flex justify-between sm:table-cell">
-                          <span className="sm:hidden text-gray-500">Invoice:</span>
-                          {r.number || r.id}
+                      <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td className="px-4 py-3 font-medium dark:text-white">
+                          {r.number || `#${r.id.slice(-6)}`}
                         </td>
-                        <td className="px-4 py-2 flex justify-between sm:table-cell">
-                          <span className="sm:hidden text-gray-500">Client:</span>
+                        <td className="px-4 py-3 dark:text-white">
                           {r.clientName}
                         </td>
-                        <td className="px-4 py-2 flex justify-between sm:table-cell">
-                          <span className="sm:hidden text-gray-500">Issued:</span>
-                          {formatDate(r.issue_date)}
-                        </td>
-                        <td className="px-4 py-2 flex justify-between sm:table-cell">
-                          <span className="sm:hidden text-gray-500">Due:</span>
+                        <td className="px-4 py-3 dark:text-white">
                           {formatDate(r.due_date)}
                         </td>
-                        <td className="px-4 py-2 flex justify-between sm:table-cell">
-                          <span className="sm:hidden text-gray-500">Status:</span>
-                          <span className={`inline-flex items-center ${badge.cls} px-2 py-0.5 rounded-full text-xs`}>{badge.text}</span>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center ${badge.cls} px-2 py-1 rounded-full text-xs font-medium`}>
+                            {badge.text}
+                          </span>
                         </td>
-                        <td className="px-4 py-2 text-right font-semibold flex justify-between sm:table-cell">
-                          <span className="sm:hidden text-gray-500">Amount:</span>
+                        <td className="px-4 py-3 text-right font-semibold dark:text-white">
                           {formatMoney(r.total, r.currency || tenant?.currency)}
                         </td>
                       </tr>
@@ -1587,37 +1091,36 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Sidebar content - stacks on mobile, 4 cols on desktop */}
-        <div className="lg:col-span-4 space-y-6">
+        {/* Sidebar - Recent Activity */}
+        <div className="space-y-6">
           {/* Recent Quotes */}
-          <section className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 overflow-hidden">
+          <section className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm ring-1 ring-black/5 dark:ring-gray-700 overflow-hidden">
             <Header title="Recent Quotes" count={quotes.length}>
-              <Link to="/app/quotes/new" className="text-xs rounded-lg px-2 py-1 bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-1">
+              <Link to="/app/quotes/new" className="text-xs rounded-lg px-2 py-1 bg-blue-600 text-white hover:bg-blue-700">
                 <FontAwesomeIcon icon={faPlus} className="w-3 h-3" />
-                <span className="hidden sm:inline">New</span>
               </Link>
             </Header>
-            <ul className="divide-y divide-black/5 text-sm">
+            <ul className="divide-y divide-gray-100 dark:divide-gray-700 text-sm">
               {quotes.length === 0 ? (
-                <li className="px-4 py-8 text-center text-black/60">
-                  <FontAwesomeIcon icon={faFileContract} className="w-8 h-8 text-gray-300 mb-2" />
-                  <p>No quotes yet.</p>
+                <li className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <FontAwesomeIcon icon={faFileContract} className="w-8 h-8 text-gray-300 dark:text-gray-600 mb-2" />
+                  <p>No quotes yet</p>
                 </li>
               ) : (
                 quotes.slice(0, 5).map(q => {
                   const statusBadge = getQuoteStatusBadge(q.status);
                   return (
-                    <li key={q.id} className="px-4 py-3">
+                    <li key={q.id} className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700">
                       <div className="flex items-center justify-between">
                         <div className="min-w-0 flex-1">
-                          <div className="font-medium truncate">{q.clientName}</div>
-                          <div className="text-black/60 text-xs">{formatMoney(q.total, q.currency || tenant?.currency)}</div>
+                          <div className="font-medium truncate dark:text-white">{q.clientName}</div>
+                          <div className="text-gray-500 dark:text-gray-400 text-xs">
+                            {formatMoney(q.total, q.currency || tenant?.currency)}
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <span className={`inline-flex items-center ${statusBadge.cls} px-2 py-1 rounded-full text-xs font-medium`}>
-                            {statusBadge.text}
-                          </span>
-                        </div>
+                        <span className={`inline-flex items-center ${statusBadge.cls} px-2 py-1 rounded-full text-xs font-medium`}>
+                          {statusBadge.text}
+                        </span>
                       </div>
                     </li>
                   );
@@ -1626,23 +1129,22 @@ export default function Dashboard() {
             </ul>
           </section>
 
-          {/* Recent Cashflow */}
-          <section className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 overflow-hidden">
+          {/* Recent Transactions */}
+          <section className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm ring-1 ring-black/5 dark:ring-gray-700 overflow-hidden">
             <Header title="Recent Transactions" count={cashflowTransactions.length}>
-              <Link to="/app/cashflow/new" className="text-xs rounded-lg px-2 py-1 bg-green-600 text-white hover:bg-green-700 flex items-center gap-1">
+              <Link to="/app/cashflow/new" className="text-xs rounded-lg px-2 py-1 bg-green-600 text-white hover:bg-green-700">
                 <FontAwesomeIcon icon={faPlus} className="w-3 h-3" />
-                <span className="hidden sm:inline">Add</span>
               </Link>
             </Header>
-            <ul className="divide-y divide-black/5 text-sm">
+            <ul className="divide-y divide-gray-100 dark:divide-gray-700 text-sm">
               {cashflowTransactions.length === 0 ? (
-                <li className="px-4 py-8 text-center text-black/60">
-                  <FontAwesomeIcon icon={faMoneyBillWave} className="w-8 h-8 text-gray-300 mb-2" />
-                  <p>No transactions yet.</p>
+                <li className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <FontAwesomeIcon icon={faMoneyBillWave} className="w-8 h-8 text-gray-300 dark:text-gray-600 mb-2" />
+                  <p>No transactions yet</p>
                 </li>
               ) : (
                 cashflowTransactions.slice(0, 5).map(t => (
-                  <li key={t.id} className="px-4 py-3">
+                  <li key={t.id} className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700">
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
@@ -1650,11 +1152,11 @@ export default function Dashboard() {
                             icon={t.transaction_type === 'cash_in' ? faArrowUp : faArrowDown} 
                             className={`w-3 h-3 ${t.transaction_type === 'cash_in' ? 'text-green-600' : 'text-red-600'}`}
                           />
-                          <span className="font-medium truncate">{t.description}</span>
+                          <span className="font-medium truncate dark:text-white">{t.description}</span>
                         </div>
-                        <div className="text-black/60 text-xs">{t.category || 'Uncategorized'}</div>
+                        <div className="text-gray-500 dark:text-gray-400 text-xs">{t.category || 'Uncategorized'}</div>
                       </div>
-                      <div className={`text-right font-medium ${t.transaction_type === 'cash_in' ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`text-right font-semibold ${t.transaction_type === 'cash_in' ? 'text-green-600' : 'text-red-600'}`}>
                         {t.transaction_type === 'cash_in' ? '+' : '-'}{formatMoney(t.amount, t.currency)}
                       </div>
                     </div>
@@ -1666,41 +1168,21 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Quick actions */}
-      <div className="pb-8">
-        <div className="rounded-2xl shadow-sm ring-1 ring-black/5 p-4 sm:p-6" style={{ background: "#E9F5EE" }}>
-          <h3 className="font-semibold mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            <Link to="/app/invoices/wizard" className="rounded-xl bg-white px-3 py-3 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5 text-center">
-              <FontAwesomeIcon icon={faFileInvoice} className="w-4 h-4 mb-1 text-emerald-600" />
-              <div>Invoice</div>
-            </Link>
-            <Link to="/app/quotes/new" className="rounded-xl bg-white px-3 py-3 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5 text-center">
-              <FontAwesomeIcon icon={faFileContract} className="w-4 h-4 mb-1 text-blue-600" />
-              <div>Quote</div>
-            </Link>
-            <Link to="/app/cashflow/new" className="rounded-xl bg-white px-3 py-3 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5 text-center">
-              <FontAwesomeIcon icon={faMoneyBillWave} className="w-4 h-4 mb-1 text-green-600" />
-              <div>Transaction</div>
-            </Link>
-            <Link to="/app/clients/new" className="rounded-xl bg-white px-3 py-3 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5 text-center">
-              <FontAwesomeIcon icon={faBuilding} className="w-4 h-4 mb-1 text-indigo-600" />
-              <div>Client</div>
-            </Link>
-            <Link to="/app/items/new" className="rounded-xl bg-white px-3 py-3 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5 text-center">
-              <FontAwesomeIcon icon={faBoxes} className="w-4 h-4 mb-1 text-purple-600" />
-              <div>Item</div>
-            </Link>
-            <button 
-              onClick={seedRouterLimited}
-              disabled={seeding}
-              className="rounded-xl bg-white px-3 py-3 text-sm shadow-sm ring-1 ring-black/5 hover:bg-black/5 text-center disabled:opacity-50"
-            >
-              <div>{seeding ? "Seeding..." : "Demo Data"}</div>
-            </button>
-          </div>
+      {/* Demo Data Button - Only show if no data */}
+      {invoices.length === 0 && quotes.length === 0 && cashflowTransactions.length === 0 && (
+        <div className="mt-8 text-center">
+          <button 
+            onClick={seedRouterLimited}
+            disabled={seeding}
+            className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+          >
+            {seeding ? "Generating Demo Data..." : "Generate Demo Data"}
+          </button>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Add sample invoices and transactions to explore the dashboard
+          </p>
         </div>
-      </div>
+      )}
     </div>
   );
 }

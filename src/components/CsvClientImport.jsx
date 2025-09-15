@@ -136,7 +136,7 @@ export default function CsvClientImport({ tenantId, onDone }) {
   return (
     <div className="rounded-xl border border-gray-200 p-4 bg-white/70 backdrop-blur">
       <div className="flex items-center justify-between">
-        <h4 className="font-semibold text-gray-800">Import clients (CSV)</h4>
+        <h4 className="font-semibold text-gray-800 dark:text-white">Import clients (CSV)</h4>
         <button
           type="button"
           onClick={downloadTemplate}
@@ -185,7 +185,7 @@ export default function CsvClientImport({ tenantId, onDone }) {
               {preview.map((r, idx) => (
                 <tr key={idx} className="border-b border-gray-100">
                   {headers.map((h) => (
-                    <td key={h} className="px-2 py-1 text-gray-800">
+                    <td key={h} className="px-2 py-1 text-gray-800 dark:text-white">
                       {r[h]}
                     </td>
                   ))}

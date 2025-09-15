@@ -41,7 +41,7 @@ export default function TestimonialCardsSection() {
   return (
     <section className="bg-finovo-light/20 py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl md:text-2xl font-extrabold text-gray-900 text-center mb-12">
+        <h2 className="text-2xl md:text-2xl font-extrabold text-gray-900 dark:text-white text-center mb-12">
           Loved by industry leaders
         </h2>
 

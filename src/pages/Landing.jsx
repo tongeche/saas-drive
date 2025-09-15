@@ -37,7 +37,7 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="bg-gray-50 text-gray-800 min-h-screen">
+    <div className="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen">
       {/* If SiteHeader is fixed, pass its height (e.g., 72) */}
       <ScrollToHash offset={0} />
       <SiteHeader />
@@ -46,7 +46,7 @@ export default function Landing() {
       <main>
         <section
           id="home"
-          className="relative py-20 bg-finovo-light/50 overflow-hidden"
+          className="relative py-20 bg-finovo-light/50 dark:bg-gray-800/50 overflow-hidden"
         >
           {/* soft radial wash */}
           <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_top,rgba(60,107,91,0.10),rgba(217,240,225,0.40))]" />
@@ -79,11 +79,11 @@ export default function Landing() {
                 From one startup to another
               </p>
               {/* H1 for SEO */}
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 leading-tight text-gray-900">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 leading-tight text-gray-900 dark:text-white">
                 <span className="text-finovo">Finovo</span> gives you a clear
                 view of your money
               </h1>
-              <p className="text-lg md:text-xl mb-8 opacity-90 text-gray-700">
+              <p className="text-lg md:text-xl mb-8 opacity-90 text-gray-700 dark:text-gray-300">
                 Less time on books, more time on breakthrough ideas.
               </p>
               <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 justify-center mb-12">
@@ -125,23 +125,23 @@ export default function Landing() {
         </section>
 
         {/* About Us */}
-        <section id="about" className="relative py-20 bg-white overflow-hidden">
+        <section id="about" className="relative py-20 bg-white dark:bg-gray-800 overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 relative">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
               <div className="order-2 md:order-1 text-center md:text-left">
                 <p className="text-finovo text-lg font-semibold mb-2">
                   Our Story
                 </p>
-                <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight text-gray-900">
+                <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight text-gray-900 dark:text-white">
                   Built on a foundation of{" "}
                   <span className="text-finovo">trust</span> and innovation.
                 </h2>
-                <p className="text-lg md:text-xl mb-6 opacity-90 text-gray-700">
+                <p className="text-lg md:text-xl mb-6 opacity-90 text-gray-700 dark:text-gray-300">
                   We're innovating for you. Finovo was born out of our own
                   startup journey, built to be the clear and simple solution we
                   needed.
                 </p>
-                <p className="text-lg md:text-xl mb-8 opacity-90 text-gray-700">
+                <p className="text-lg md:text-xl mb-8 opacity-90 text-gray-700 dark:text-gray-300">
                   We get it. We're founders, too. We built Finovo because we
                   couldn't find financial tools that were simple and affordable.
                 </p>
@@ -164,7 +164,7 @@ export default function Landing() {
         </section>
 
         {/* Feature: Invoices */}
-        <section id="features" className="bg-white py-20">
+        <section id="features" className="bg-white dark:bg-gray-800 py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row items-center lg:space-x-12">
               {/* Image */}
@@ -178,16 +178,93 @@ export default function Landing() {
 
               {/* Copy */}
               <div className="lg:w-1/2 text-center lg:text-left">
-                <h2 className="mt-2 text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                <h2 className="mt-2 text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl">
                   Smart invoices. Simple payments.
                 </h2>
                 <div className="mb-4">
-                  <img
-                    src="/assets/imgs/sc-smart-reliable-invoice.png"
-                    alt="Feature illustration"
-                    className="rounded-lg shadow-md w-full h-auto"
-                  />
-                  <p className="mt-4 text-lg text-gray-500 px-4 sm:px-0 py-6 ">
+                  {/* Demo Invoices Table */}
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                    <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Invoices</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Demo data - See how easy invoice management can be</p>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Invoice</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Client</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Due Date</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
+                          <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">INV-2024-001</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">Web Development</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900 dark:text-white">TechCorp Ltd</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">tech@techcorp.com</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-semibold">$2,500.00</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">Paid</span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">Sep 15, 2024</td>
+                          </tr>
+                          <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">INV-2024-002</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">Consultation Services</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900 dark:text-white">StartupXYZ</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">hello@startupxyz.io</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-semibold">$1,200.00</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">Pending</span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">Sep 20, 2024</td>
+                          </tr>
+                          <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">INV-2024-003</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">Monthly Subscription</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900 dark:text-white">Creative Agency</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">billing@creative.co</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-semibold">$450.00</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100">Overdue</span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">Sep 10, 2024</td>
+                          </tr>
+                          <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">INV-2024-004</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">Design & Branding</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900 dark:text-white">Local Business</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">contact@localbiz.com</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-semibold">$800.00</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">Draft</span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">Sep 25, 2024</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-lg text-gray-500 dark:text-gray-400 px-4 sm:px-0 py-6 ">
                     Generate custom invoices in seconds and share them directly
                     with clients. Finovo is designed to make the entire process
                     effortless, from creation to collection. It’s invoicing,
@@ -209,7 +286,7 @@ export default function Landing() {
         </section>
 
         {/* Feature: Quotations */}
-        <section className="bg-gray-50 py-20">
+        <section className="bg-gray-50 dark:bg-gray-700 py-20">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row-reverse items-center lg:space-x-12">
               {/* Image */}
@@ -226,10 +303,10 @@ export default function Landing() {
                 <p className="text-sm font-semibold text-finovo uppercase tracking-wider">
                   OUR FEATURE
                 </p>
-                <h2 className="mt-2 text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                <h2 className="mt-2 text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl">
                   Smart Sharable Quotations
                 </h2>
-                <p className="mt-4 text-lg text-gray-500">
+                <p className="mt-4 text-lg text-gray-500 dark:text-gray-400">
                   Just build it, send it with a single tap to WhatsApp, and get
                   feedback from your client in the cloud. It's quoting,
                   simplified.
@@ -248,63 +325,63 @@ export default function Landing() {
         </section>
 
         {/* Why Finovo */}
-        <section id="why" className="bg-gray-100 py-20 px-4 sm:px-6 lg:px-8">
+        <section id="why" className="bg-gray-100 dark:bg-gray-700 py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto text-center">
             <h3 className="text-finovo text-lg font-semibold mb-2 uppercase">
               Why Finovo
             </h3>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-16">
+            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-16">
               Designed for the future of your business.
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
               {/* Card 1 */}
               <div className="flex flex-col items-center text-center">
-                <div className="w-full max-w-sm rounded-2xl p-6 bg-white shadow-lg mb-6">
+                <div className="w-full max-w-sm rounded-2xl p-6 bg-white dark:bg-gray-800 shadow-lg mb-6">
                   <img
                     src="/assets/imgs/sc-smart_analysis.png"
                     alt="Real-Time Analytics UI"
                     className="w-full h-auto rounded-xl"
                   />
                 </div>
-                <h4 className="text-2xl font-bold text-gray-900 mb-2">
+                <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                   Real-Time Analytics
                 </h4>
-                <p className="text-gray-500 max-w-xs">
+                <p className="text-gray-500 dark:text-gray-400 max-w-xs">
                   Get a clear, real-time view of your finances.
                 </p>
               </div>
 
               {/* Card 2 */}
               <div className="flex flex-col items-center text-center">
-                <div className="w-full max-w-sm rounded-2xl p-6 bg-white shadow-lg mb-6">
+                <div className="w-full max-w-sm rounded-2xl p-6 bg-white dark:bg-gray-800 shadow-lg mb-6">
                   <img
                     src="/assets/imgs/sc-real_time.png"
                     alt="Seamless Integrations UI"
                     className="w-full h-auto rounded-xl"
                   />
                 </div>
-                <h4 className="text-2xl font-bold text-gray-900 mb-2">
+                <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                   Seamless Integrations
                 </h4>
-                <p className="text-gray-500 max-w-xs">
+                <p className="text-gray-500 dark:text-gray-400 max-w-xs">
                   Connected ecosystem that works the way you do.
                 </p>
               </div>
 
               {/* Card 3 */}
               <div className="flex flex-col items-center text-center">
-                <div className="w-full max-w-sm rounded-2xl p-6 bg-white shadow-lg mb-6">
+                <div className="w-full max-w-sm rounded-2xl p-6 bg-white dark:bg-gray-800 shadow-lg mb-6">
                   <img
                     src="/assets/imgs/sc-manage-quotes.png"
                     alt="Request Payments UI"
                     className="w-full h-auto rounded-xl"
                   />
                 </div>
-                <h4 className="text-2xl font-bold text-gray-900 mb-2">
+                <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                   Smart Finances Manager
                 </h4>
-                <p className="text-gray-500 max-w-xs">
+                <p className="text-gray-500 dark:text-gray-400 max-w-xs">
                   Get your proposals going in seconds and share seamlessly.
                 </p>
               </div>
@@ -315,7 +392,7 @@ export default function Landing() {
         {/* Boost Productivity */}
         <section
           id="productivity"
-          className="bg-white py-20 px-4 sm:px-6 lg:px-8"
+          className="bg-white dark:bg-gray-800 py-20 px-4 sm:px-6 lg:px-8"
         >
           <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             {/* LEFT: copy */}
@@ -324,17 +401,17 @@ export default function Landing() {
                 Boost Your Work
               </span>
 
-              <h2 className="mt-4 text-4xl md:text-5xl font-extrabold text-gray-900">
+              <h2 className="mt-4 text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white">
                 Boost Your Productivity
               </h2>
 
-              <p className="mt-4 text-gray-600 leading-relaxed">
+              <p className="mt-4 text-gray-600 dark:text-white leading-relaxed">
                 Finovo cuts admin time to minutes. Create invoices, track
                 expenses, and see cashflow in real time—so you can focus on
                 growth, not paperwork.
               </p>
 
-              <ul className="mt-6 space-y-3 text-gray-700">
+              <ul className="mt-6 space-y-3 text-gray-700 dark:text-white">
                 <li className="flex gap-3">
                   <span className="mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-finovo text-white text-xs">
                     ✓
@@ -364,7 +441,7 @@ export default function Landing() {
                 </a>
                 <Link
                   to="/register"
-                  className="inline-flex items-center justify-center rounded-lg px-5 py-3 font-semibold border border-gray-300 text-gray-800 hover:bg-gray-50"
+                  className="inline-flex items-center justify-center rounded-lg px-5 py-3 font-semibold border border-gray-300 dark:border-gray-400 text-gray-800 dark:text-gray-800 hover:bg-gray-50 dark:hover:bg-gray-100 dark:bg-white"
                 >
                   Start Free
                 </Link>
@@ -488,14 +565,14 @@ export default function Landing() {
 
                   {/* Legend */}
                   <div className="mt-3 flex items-center gap-4 text-sm">
-                    <span className="inline-flex items-center gap-2 text-gray-700">
+                    <span className="inline-flex items-center gap-2 text-gray-700 dark:text-gray-300">
                       <span
                         className="h-3 w-3 rounded-sm"
                         style={{ background: "#3c6b5b" }}
                       />
                       Paid
                     </span>
-                    <span className="inline-flex items-center gap-2 text-gray-700">
+                    <span className="inline-flex items-center gap-2 text-gray-700 dark:text-gray-300">
                       <span
                         className="h-3 w-3 rounded-sm"
                         style={{ background: "#d9f0e1" }}
@@ -527,64 +604,64 @@ export default function Landing() {
           </div>
         </section>
 
-        <section id="testimonials" className="bg-white py-20 px-4 sm:px-6 lg:px-8">
+        <section id="testimonials" className="bg-white dark:bg-gray-800 py-20 px-4 sm:px-6 lg:px-8">
         <Testimonials />
         </section>
 
 
         <section
           id="we-do-it-differently"
-          className="bg-white py-20 px-4 sm:px-6 lg:px-8"
+          className="bg-white dark:bg-gray-800 py-20 px-4 sm:px-6 lg:px-8"
         >
           <div className="max-w-7xl mx-auto text-center">
-            <div class="bg-white py-16 sm:py-24">
-              <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-12">
+            <div className="bg-white dark:bg-gray-800 py-16 sm:py-24">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-12">
                   We do this differently
                 </h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                  <div class="p-6 rounded-lg bg-gray-50 flex flex-col items-center justify-center h-full">
-                    <p class="text-5xl font-extrabold text-finovo mb-2">10+</p>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                  <div className="p-6 rounded-lg bg-gray-50 dark:bg-gray-700 flex flex-col items-center justify-center h-full">
+                    <p className="text-5xl font-extrabold text-finovo mb-2">10+</p>
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                       Startups Served
                     </h3>
-                    <p class="text-gray-600 text-sm max-w-xs">
+                    <p className="text-gray-600 dark:text-gray-300 text-sm max-w-xs">
                       Empowering founders across borders with intuitive
                       financial tools.
                     </p>
                   </div>
-                  <div class="p-6 rounded-lg bg-gray-50 flex flex-col items-center justify-center h-full">
-                    <p class="text-5xl font-extrabold text-finovo mb-2">
-                      $10K<span class="text-3xl">+</span>
+                  <div className="p-6 rounded-lg bg-gray-50 dark:bg-gray-700 flex flex-col items-center justify-center h-full">
+                    <p className="text-5xl font-extrabold text-finovo mb-2">
+                      $10K<span className="text-3xl">+</span>
                     </p>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                       Total Invoiced
                     </h3>
-                    <p class="text-gray-600 text-sm max-w-xs">
+                    <p className="text-gray-600 dark:text-gray-300 text-sm max-w-xs">
                       Helping startups secure crucial funding to fuel their big
                       ideas.
                     </p>
                   </div>
-                  <div class="p-6 rounded-lg bg-gray-50 flex flex-col items-center justify-center h-full">
-                    <p class="text-5xl font-extrabold text-finovo mb-2">
-                      30<span class="text-3xl">%</span>
+                  <div className="p-6 rounded-lg bg-gray-50 dark:bg-gray-700 flex flex-col items-center justify-center h-full">
+                    <p className="text-5xl font-extrabold text-finovo mb-2">
+                      30<span className="text-3xl">%</span>
                     </p>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                       Time Saved
                     </h3>
-                    <p class="text-gray-600 text-sm max-w-xs">
+                    <p className="text-gray-600 dark:text-gray-300 text-sm max-w-xs">
                       Automating busy work, giving founders more time to
                       innovate and grow.
                     </p>
                   </div>
-                  <div class="p-6 rounded-lg bg-gray-50 flex flex-col items-center justify-center h-full">
-                    <p class="text-5xl font-extrabold text-finovo mb-2">
-                      15<span class="text-3xl">+</span>
+                  <div className="p-6 rounded-lg bg-gray-50 dark:bg-gray-700 flex flex-col items-center justify-center h-full">
+                    <p className="text-5xl font-extrabold text-finovo mb-2">
+                      15<span className="text-3xl">+</span>
                     </p>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                       Client Reviews
                     </h3>
-                    <p class="text-gray-600 text-sm max-w-xs">
+                    <p className="text-gray-600 dark:text-gray-300 text-sm max-w-xs">
                       A dedicated team building the future o stratup finance.
                     </p>
                   </div>
@@ -594,23 +671,23 @@ export default function Landing() {
           </div>
         </section>
 
-        <section id="faq" className="bg-white py-20 px-4 sm:px-6 lg:px-8">
+        <section id="faq" className="bg-white dark:bg-gray-800 py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <FaqSection />
           </div>
         </section>
 
         {/* Contact Us – Finovo */}
-        <section id="contact" className="bg-white py-20 px-4 sm:px-6 lg:px-8">
+        <section id="contact" className="bg-white dark:bg-gray-800 py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* LEFT: headline + meta + form */}
             <div>
-              <h2 className="text-4xl md:text-5xl font-extrabold leading-tight text-gray-900">
+              <h2 className="text-4xl md:text-5xl font-extrabold leading-tight text-gray-900 dark:text-white">
                 Have a Project in Mind?
                 <span className="block text-finovo">Contact Us</span>
               </h2>
 
-              <p className="mt-3 text-gray-600 max-w-xl">
+              <p className="mt-3 text-gray-600 dark:text-gray-300 max-w-xl">
                 Tell us what you’re building. We’ll show how Finovo cuts admin
                 time, clarifies cashflow, and keeps you focused on growth.
               </p>
@@ -632,12 +709,12 @@ export default function Landing() {
                     </svg>
                   </span>
                   <div>
-                    <div className="text-sm font-semibold text-gray-800">
+                    <div className="text-sm font-semibold text-gray-800 dark:text-white">
                       Email Us
                     </div>
                     <a
                       href="mailto:support@finovo.app"
-                      className="text-gray-700 hover:text-finovo"
+                      className="text-gray-700 dark:text-gray-300 hover:text-finovo dark:hover:text-finovo"
                     >
                       support@finovo.app
                     </a>
@@ -658,12 +735,12 @@ export default function Landing() {
                     </svg>
                   </span>
                   <div>
-                    <div className="text-sm font-semibold text-gray-800">
+                    <div className="text-sm font-semibold text-gray-800 dark:text-white">
                       Phone Us
                     </div>
                     <a
                       href="tel:+351931608896"
-                      className="text-gray-700 hover:text-finovo"
+                      className="text-gray-700 dark:text-gray-300 hover:text-finovo dark:hover:text-finovo"
                     >
                       +351 931 608 896
                     </a>
@@ -681,20 +758,20 @@ export default function Landing() {
                     type="text"
                     required
                     placeholder="Full Name"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-finovo focus:border-finovo"
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-finovo focus:border-finovo"
                   />
                   <input
                     type="email"
                     required
                     placeholder="Email Address"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-finovo focus:border-finovo"
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-finovo focus:border-finovo"
                   />
                 </div>
 
                 <textarea
                   rows="4"
                   placeholder="Write Message"
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-finovo focus:border-finovo"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-finovo focus:border-finovo"
                 />
 
                 <button

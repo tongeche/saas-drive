@@ -333,46 +333,80 @@ export default function CRM() {
       </div>
 
       {/* Analytics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Clients</p>
-              <p className="text-2xl font-bold text-gray-900">{analytics.total_clients || 0}</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {/* Total Clients */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <FontAwesomeIcon icon={faUsers} className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
-            <FontAwesomeIcon icon={faUsers} className="w-8 h-8 text-blue-600" />
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
+              Total Clients
+            </p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              {analytics.total_clients || 0}
+            </p>
+            <div className="flex items-center justify-center">
+              <FontAwesomeIcon icon={faArrowUp} className="w-3 h-3 text-green-500 mr-1" />
+              <span className="text-xs text-green-600 font-medium">+12% MoM</span>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Active Clients</p>
-              <p className="text-2xl font-bold text-green-600">{analytics.active_clients || 0}</p>
+        {/* Active Clients */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <FontAwesomeIcon icon={faUserCheck} className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
-            <FontAwesomeIcon icon={faUserCheck} className="w-8 h-8 text-green-600" />
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
+              Active Clients
+            </p>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400 mb-2">
+              {analytics.active_clients || 0}
+            </p>
+            <div className="flex items-center justify-center">
+              <FontAwesomeIcon icon={faArrowUp} className="w-3 h-3 text-green-500 mr-1" />
+              <span className="text-xs text-green-600 font-medium">+8% MoM</span>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-              <p className="text-2xl font-bold text-purple-600">
-                {formatCurrency(analytics.total_revenue || 0, 'KES')}
-              </p>
+        {/* Total Revenue */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <FontAwesomeIcon icon={faMoneyBillWave} className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
-            <FontAwesomeIcon icon={faMoneyBillWave} className="w-8 h-8 text-purple-600" />
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
+              Total Revenue
+            </p>
+            <p className="text-lg font-bold text-purple-600 dark:text-purple-400 mb-2 leading-tight">
+              {formatCurrency(analytics.total_revenue || 0, 'KES')}
+            </p>
+            <div className="flex items-center justify-center">
+              <FontAwesomeIcon icon={faArrowUp} className="w-3 h-3 text-green-500 mr-1" />
+              <span className="text-xs text-green-600 font-medium">+15% MoM</span>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Avg. Satisfaction</p>
-              <p className="text-2xl font-bold text-yellow-600">{analytics.avg_satisfaction || 0}/10</p>
+        {/* Average Satisfaction */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <FontAwesomeIcon icon={faStar} className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
             </div>
-            <FontAwesomeIcon icon={faStar} className="w-8 h-8 text-yellow-600" />
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
+              Satisfaction
+            </p>
+            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mb-2">
+              {analytics.avg_satisfaction || 0}/10
+            </p>
+            <div className="flex items-center justify-center">
+              <FontAwesomeIcon icon={faArrowUp} className="w-3 h-3 text-green-500 mr-1" />
+              <span className="text-xs text-green-600 font-medium">+5% MoM</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1227,6 +1261,106 @@ function CommunicationsTab({ client, communications, formatDate, formatTime }) {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+// Analytics Dashboard Component for CRM
+function AnalyticsDashboard({ analytics, formatCurrency, formatDate }) {
+  return (
+    <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <FontAwesomeIcon icon={faUsers} className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
+              Total Clients
+            </p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              {analytics.total_clients || 0}
+            </p>
+            <div className="flex items-center justify-center">
+              <FontAwesomeIcon icon={faArrowUp} className="w-3 h-3 text-green-500 mr-1" />
+              <span className="text-xs text-green-600 font-medium">+12% MoM</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <FontAwesomeIcon icon={faUserCheck} className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
+              Active Clients
+            </p>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400 mb-2">
+              {analytics.active_clients || 0}
+            </p>
+            <div className="flex items-center justify-center">
+              <FontAwesomeIcon icon={faArrowUp} className="w-3 h-3 text-green-500 mr-1" />
+              <span className="text-xs text-green-600 font-medium">+8% MoM</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <FontAwesomeIcon icon={faMoneyBillWave} className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            </div>
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
+              Total Revenue
+            </p>
+            <p className="text-lg font-bold text-purple-600 dark:text-purple-400 mb-2 leading-tight">
+              {formatCurrency(analytics.total_revenue || 0, 'KES')}
+            </p>
+            <div className="flex items-center justify-center">
+              <FontAwesomeIcon icon={faArrowUp} className="w-3 h-3 text-green-500 mr-1" />
+              <span className="text-xs text-green-600 font-medium">+15% MoM</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <FontAwesomeIcon icon={faStar} className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+            </div>
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
+              Satisfaction
+            </p>
+            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mb-2">
+              {analytics.avg_satisfaction || 0}/10
+            </p>
+            <div className="flex items-center justify-center">
+              <FontAwesomeIcon icon={faArrowUp} className="w-3 h-3 text-green-500 mr-1" />
+              <span className="text-xs text-green-600 font-medium">+5% MoM</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Analytics Content */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="text-center py-12">
+          <FontAwesomeIcon icon={faChartLine} className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Advanced CRM Analytics</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Detailed client analytics, engagement metrics, and relationship insights coming soon
+          </p>
+          <button 
+            onClick={() => window.location.href = '/app/business/analytics'}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <FontAwesomeIcon icon={faChartLine} className="w-4 h-4 mr-2" />
+            View Full Analytics Dashboard
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -76,7 +76,7 @@ export default function SearchSelect({
       )}
 
       {open && (
-        <div className="absolute z-20 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto">
+        <div className="absolute z-20 mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-lg max-h-72 overflow-auto">
           {busy && (
             <div className="px-3 py-2 text-sm text-gray-500">Searching…</div>
           )}
@@ -88,9 +88,9 @@ export default function SearchSelect({
               key={opt.id}
               type="button"
               onClick={() => { onSelect?.(opt); setOpen(false); setQ(""); }}
-              className="w-full text-left px-3 py-2 hover:bg-gray-50"
+              className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white"
             >
-              <div className="text-sm text-gray-900">{opt.label}</div>
+              <div className="text-sm text-gray-900 dark:text-white">{opt.label}</div>
               {opt.subLabel && <div className="text-xs text-gray-500">{opt.subLabel}</div>}
             </button>
           ))}
@@ -98,7 +98,7 @@ export default function SearchSelect({
             <button
               type="button"
               onClick={() => { onCreate?.(q.trim()); setOpen(false); setQ(""); }}
-              className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm"
+              className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white text-sm"
             >
               Create “<span className="font-medium">{q.trim()}</span>”
             </button>
