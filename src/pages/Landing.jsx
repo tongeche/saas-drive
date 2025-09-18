@@ -2,8 +2,56 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import supabase from "../lib/supabase";
 import SiteHeader from "../components/SiteHeader.jsx";
-import Testimonials from '../components/testimonials.jsx';
-import FaqSection from "../components/FaqSection.jsx"
+import Testimonials from "../components/testimonials.jsx";
+import FaqSection from "../components/FaqSection.jsx";
+
+const defaultHighlights = [
+  {
+    slug: "startups-served",
+    title: "Startups Served",
+    description: "Empowering founders across borders with intuitive financial tools.",
+    value: 10,
+    value_prefix: "",
+    value_suffix: "+",
+    value_display: "",
+    value_decimals: 0,
+  },
+  {
+    slug: "total-invoiced",
+    title: "Total Invoiced",
+    description: "Helping startups secure crucial funding to fuel their big ideas.",
+    value: 10000,
+    value_prefix: "$",
+    value_suffix: "",
+    value_display: "10K+",
+    value_decimals: 0,
+  },
+  {
+    slug: "time-saved",
+    title: "Time Saved",
+    description: "Automating busy work, giving founders more time to innovate and grow.",
+    value: 30,
+    value_prefix: "",
+    value_suffix: "%",
+    value_display: "",
+    value_decimals: 0,
+  },
+  {
+    slug: "client-reviews",
+    title: "Client Reviews",
+    description: "A dedicated team building the future of startup finance.",
+    value: 15,
+    value_prefix: "",
+    value_suffix: "+",
+    value_display: "",
+    value_decimals: 0,
+  },
+];
+
+const defaultHighlightsBySlug = defaultHighlights.reduce((acc, highlight) => {
+  acc[highlight.slug] = highlight;
+  return acc;
+}, {});
 
 /**
  * Smoothly scroll to the current hash, with optional offset for sticky headers.
@@ -23,6 +71,7 @@ function ScrollToHash({ offset = 0 }) {
 
 export default function Landing() {
   const [loggedIn, setLoggedIn] = useState(false);
+  const [highlights, setHighlights] = useState(defaultHighlights);
 
   useEffect(() => {
     let sub;
@@ -35,6 +84,109 @@ export default function Landing() {
     })();
     return () => sub?.subscription?.unsubscribe?.();
   }, []);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function fetchHighlights() {
+      try {
+        const { data, error } = await supabase
+          .from("landing_highlights")
+          .select(
+            "slug,title,description,value,value_prefix,value_suffix,value_display,value_decimals,sort_order"
+          )
+          .order("sort_order", { ascending: true });
+
+        if (error) {
+          throw error;
+        }
+
+        if (!isCancelled && data && data.length > 0) {
+          const normalized = data.map((item, index) => {
+            const fallback =
+              defaultHighlightsBySlug[item.slug] ??
+              defaultHighlights[index] ??
+              defaultHighlights[0];
+
+            const decimalsRaw =
+              typeof item.value_decimals === "number"
+                ? item.value_decimals
+                : Number(item.value_decimals);
+            const valueDecimals = Number.isFinite(decimalsRaw)
+              ? decimalsRaw
+              : fallback?.value_decimals ?? 0;
+
+            const rawValue =
+              typeof item.value === "number"
+                ? item.value
+                : item.value !== null && item.value !== undefined
+                ? Number(item.value)
+                : NaN;
+            const value = Number.isFinite(rawValue)
+              ? rawValue
+              : fallback?.value ?? 0;
+
+            return {
+              slug: item.slug ?? fallback.slug ?? `highlight-${index}`,
+              title: item.title ?? fallback.title,
+              description: item.description ?? fallback.description,
+              value,
+              value_prefix: item.value_prefix ?? fallback.value_prefix ?? "",
+              value_suffix: item.value_suffix ?? fallback.value_suffix ?? "",
+              value_display:
+                typeof item.value_display === "string"
+                  ? item.value_display
+                  : fallback.value_display ?? "",
+              value_decimals: valueDecimals,
+            };
+          });
+
+          setHighlights(normalized);
+        }
+      } catch (err) {
+        console.error("Failed to load landing highlights", err);
+      }
+    }
+
+    fetchHighlights();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  const formatHighlightValue = (highlight) => {
+    const prefix = highlight.value_prefix ?? "";
+    const suffix = highlight.value_suffix ?? "";
+    const display =
+      typeof highlight.value_display === "string" && highlight.value_display.trim().length > 0
+        ? highlight.value_display.trim()
+        : null;
+
+    if (display) {
+      return `${prefix}${display}${suffix}`;
+    }
+
+    const decimals = Number.isFinite(highlight.value_decimals)
+      ? highlight.value_decimals
+      : 0;
+
+    const numericValue =
+      typeof highlight.value === "number"
+        ? highlight.value
+        : Number(highlight.value);
+
+    if (!Number.isFinite(numericValue)) {
+      return `${prefix}${suffix}`.trim() || "—";
+    }
+
+    const formattedNumber = numericValue.toLocaleString(undefined, {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    });
+
+    return `${prefix}${formattedNumber}${suffix}`;
+  };
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen">
@@ -620,51 +772,22 @@ export default function Landing() {
                   We do this differently
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                  <div className="p-6 rounded-lg bg-gray-50 dark:bg-gray-700 flex flex-col items-center justify-center h-full">
-                    <p className="text-5xl font-extrabold text-finovo mb-2">10+</p>
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                      Startups Served
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm max-w-xs">
-                      Empowering founders across borders with intuitive
-                      financial tools.
-                    </p>
-                  </div>
-                  <div className="p-6 rounded-lg bg-gray-50 dark:bg-gray-700 flex flex-col items-center justify-center h-full">
-                    <p className="text-5xl font-extrabold text-finovo mb-2">
-                      $10K<span className="text-3xl">+</span>
-                    </p>
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                      Total Invoiced
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm max-w-xs">
-                      Helping startups secure crucial funding to fuel their big
-                      ideas.
-                    </p>
-                  </div>
-                  <div className="p-6 rounded-lg bg-gray-50 dark:bg-gray-700 flex flex-col items-center justify-center h-full">
-                    <p className="text-5xl font-extrabold text-finovo mb-2">
-                      30<span className="text-3xl">%</span>
-                    </p>
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                      Time Saved
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm max-w-xs">
-                      Automating busy work, giving founders more time to
-                      innovate and grow.
-                    </p>
-                  </div>
-                  <div className="p-6 rounded-lg bg-gray-50 dark:bg-gray-700 flex flex-col items-center justify-center h-full">
-                    <p className="text-5xl font-extrabold text-finovo mb-2">
-                      15<span className="text-3xl">+</span>
-                    </p>
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                      Client Reviews
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm max-w-xs">
-                      A dedicated team building the future o stratup finance.
-                    </p>
-                  </div>
+                  {highlights.map((highlight) => (
+                    <div
+                      key={highlight.slug}
+                      className="p-6 rounded-lg bg-gray-50 dark:bg-gray-700 flex flex-col items-center justify-center h-full"
+                    >
+                      <p className="text-5xl font-extrabold text-finovo mb-2">
+                        {formatHighlightValue(highlight)}
+                      </p>
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                        {highlight.title}
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-300 text-sm max-w-xs">
+                        {highlight.description}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
